@@ -191,10 +191,10 @@ const TABS=[{id:'all',label:'📚 All',r:rAll},{id:'today',label:'📋 Today',r:
 let D={expressions:[],discCache:{friends:{list:[],details:{}},suits:{list:[],details:{}}},excl:{friends:[],suits:[]}};
 let ct='all',selId=null,selDi=null,sugCache={};
 
-const td=()=>new Date().toISOString().split('T')[0];
+const td=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
 const fmt=d=>d?((p=d.split('-'))&&`${+p[1]}/${+p[2]}`):'—';
 const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-function cNext(fromDate,rc){if(rc>=5)return null;const d=new Date(fromDate);d.setDate(d.getDate()+INTV[rc]);return d.toISOString().split('T')[0];}
+function cNext(fromDate,rc){if(rc>=5)return null;const d=new Date(fromDate+'T00:00:00');d.setDate(d.getDate()+INTV[rc]);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function isNoEx(e){return!e.mastered&&e.reviewCount===0&&allEx(e).length===0&&(!e.activated);}
 function isDue(e){return!e.mastered&&!isNoEx(e)&&e.nextReviewDate&&e.nextReviewDate<=td();}
 function isOD(e){return!e.mastered&&!isNoEx(e)&&e.nextReviewDate&&e.nextReviewDate<td();}
