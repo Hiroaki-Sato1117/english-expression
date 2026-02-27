@@ -39,7 +39,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .ntab{padding:8px 16px;font-size:12px;font-weight:600;color:rgba(255,255,255,.5);cursor:pointer;border-radius:10px 10px 0 0;transition:all .2s;border:none;background:none;font-family:inherit;white-space:nowrap;}
 .ntab:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.07);}
 .ntab.active{color:var(--text);background:var(--bg);font-weight:700;}
-.nav-right{display:flex;align-items:center;margin-left:12px;}
+.nav-right{display:flex;align-items:center;margin-left:12px;gap:6px;}
 .tbtn{width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:white;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;}
 .tbtn:hover{background:rgba(255,255,255,.15);}
 .main{padding:20px;max-width:1100px;margin:0 auto;}
@@ -174,12 +174,16 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 </style>
 </head>
 <body>
-<nav class="nav"><div class="nav-brand">✦ Vocab Master</div><div class="nav-tabs" id="nv"></div><div class="nav-right"><button class="tbtn" id="tb" onclick="tTh()">🌙</button></div></nav>
+<nav class="nav"><div class="nav-brand">✦ Vocab Master</div><div class="nav-tabs" id="nv"></div><div class="nav-right"><button class="tbtn" id="keyBtn" onclick="oKeyMo()" title="API Key Settings">🔑</button><button class="tbtn" id="tb" onclick="tTh()">🌙</button></div></nav>
 <div class="main"><div class="tc" id="tAll"></div><div class="tc" id="tToday"></div><div class="tc" id="tDiscover"></div></div>
 <div class="mo" id="addMo"><div class="modal"><h3>Add New Expression</h3><div class="mf"><label>English Expression</label><input id="mE" placeholder='"break the ice"'></div><div class="mf"><label>Meaning (Japanese)</label><input id="mM" placeholder="場を和ませる"></div><div class="ma"><button class="btn btn-s" onclick="cMo()">Cancel</button><button class="btn btn-p" onclick="addE()">Add</button></div></div></div>
 
+<div class="mo" id="keyMo"><div class="modal"><h3>🔑 Gemini API Key</h3><p style="font-size:12px;color:var(--text3);margin-bottom:14px;">Your API key is stored locally in your browser and never sent anywhere except Google's Gemini API.</p><div class="mf"><label>API Key</label><input id="keyIn" type="password" placeholder="AIzaSy..."></div><div id="keyStatus" style="font-size:11px;margin-bottom:10px;"></div><div class="ma"><button class="btn btn-d btn-sm" onclick="delKey()" id="delKeyBtn" style="margin-right:auto;display:none;">Delete Key</button><button class="btn btn-s" onclick="cKeyMo()">Cancel</button><button class="btn btn-p" onclick="saveKey()">Save</button></div></div></div>
+
 <script>
-const GKEY="AIzaSyCu4QFN38527tXzi9gMVCBBcwnCeWQLpA0";
+function getGKEY(){return localStorage.getItem('gemini_api_key')||'';}
+function setGKEY(k){localStorage.setItem('gemini_api_key',k);}
+function delGKEY(){localStorage.removeItem('gemini_api_key');}
 const INTV=[1,3,7,14,30];
 const TABS=[{id:'all',label:'📚 All',r:rAll},{id:'today',label:'📋 Today',r:rToday},{id:'discover',label:'🔍 Discover',r:rDisc}];
 let D={expressions:[],discCache:{friends:{list:[],details:{}},suits:{list:[],details:{}}},excl:{friends:[],suits:[]}};
@@ -429,13 +433,34 @@ function rnDD(it,det,k,i){
 function addFD(k,i){const it=D.discCache[k]?.list?.[i];if(!it)return;if(D.expressions.some(e=>e.expression.toLowerCase()===it.expression.toLowerCase()))return;addE(it.expression,it.meaning_ja,k);rDisc();}
 
 async function callGem(prompt){
-  const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GKEY}`;
-  const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json'}})});
-  if(!res.ok)throw new Error(`API ${res.status}`);const json=await res.json();let text=json.candidates?.[0]?.content?.parts?.[0]?.text;if(!text)throw new Error('Empty response');
+  const key=getGKEY();
+  if(!key){oKeyMo();throw new Error('API key not set. Please enter your Gemini API key.');}
+  const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
+  const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt+'\n\nRespond ONLY with valid JSON. No markdown, no code blocks, no explanation.'}]}]})});
+  if(!res.ok)throw new Error(`API ${res.status}: ${await res.text()}`);const json=await res.json();let text=json.candidates?.[0]?.content?.parts?.[0]?.text;if(!text)throw new Error('Empty response');
   text=text.replace(/```json\s*/g,'').replace(/```\s*/g,'').trim();
   text=text.replace(/[\x00-\x1f\x7f]/g,m=>m==='\n'||m==='\r'||m==='\t'?m:'');
   return text;
 }
+
+// API Key Modal
+function oKeyMo(){
+  const mo=document.getElementById('keyMo');mo.classList.add('show');
+  const inp=document.getElementById('keyIn');const st=document.getElementById('keyStatus');const delBtn=document.getElementById('delKeyBtn');
+  const cur=getGKEY();
+  if(cur){inp.value=cur;st.innerHTML='<span style="color:var(--green)">✓ Key is set</span>';delBtn.style.display='inline-flex';}
+  else{inp.value='';st.innerHTML='<span style="color:var(--orange)">⚠ No key set — API features disabled</span>';delBtn.style.display='none';}
+  inp.focus();
+}
+function cKeyMo(){document.getElementById('keyMo').classList.remove('show');}
+function saveKey(){
+  const v=document.getElementById('keyIn').value.trim();
+  if(!v){alert('Please enter an API key.');return;}
+  setGKEY(v);cKeyMo();updKeyInd();
+}
+function delKey(){if(!confirm('Delete your API key?'))return;delGKEY();cKeyMo();updKeyInd();}
+function updKeyInd(){const btn=document.getElementById('keyBtn');btn.style.borderColor=getGKEY()?'rgba(34,197,94,.5)':'rgba(249,115,22,.5)';}
+document.getElementById('keyMo').addEventListener('click',function(e){if(e.target===this)cKeyMo();});
 
 function tTh(){const h=document.documentElement,c=h.dataset.theme,n=c==='dark'?'light':'dark';h.dataset.theme=n;document.getElementById('tb').textContent=n==='dark'?'☀️':'🌙';try{localStorage.setItem('evth',n);}catch(e){}}
 function lTh(){try{const t=localStorage.getItem('evth');if(t){document.documentElement.dataset.theme=t;document.getElementById('tb').textContent=t==='dark'?'☀️':'🌙';}}catch(e){}}
@@ -443,7 +468,8 @@ function lTh(){try{const t=localStorage.getItem('evth');if(t){document.documentE
 document.getElementById('addMo').addEventListener('click',function(e){if(e.target===this)cMo();});
 document.addEventListener('keydown',function(e){if(e.key==='Escape')cMo();});
 
-load();lTh();rNav();rT();
+load();lTh();rNav();rT();updKeyInd();
+if(!getGKEY())setTimeout(oKeyMo,500);
 </script>
 </body>
 </html>
