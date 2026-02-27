@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>English Vocab Master</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+:root,[data-theme="light"]{
+--bg:#f0f4ff;--bg2:#e0e8f8;--surface:rgba(255,255,255,.85);--surfaceSolid:#fff;
+--border:rgba(37,99,235,.08);--border2:rgba(37,99,235,.15);
+--text:#0f172a;--text2:#334155;--text3:#64748b;--text4:#94a3b8;
+--accent:#2563eb;--accent2:#1d4ed8;--accentLight:rgba(37,99,235,.08);--accentLight2:rgba(37,99,235,.04);
+--gold:#f59e0b;--goldBg:rgba(245,158,11,.1);
+--red:#ef4444;--redBg:rgba(239,68,68,.08);--orange:#f97316;--orangeBg:rgba(249,115,22,.08);
+--green:#22c55e;--greenBg:rgba(34,197,94,.08);
+--navBg:rgba(30,64,175,.95);
+--shadow:0 2px 12px rgba(0,20,80,.06);--shadow2:0 8px 32px rgba(0,20,80,.08);
+--cardHover:rgba(37,99,235,.03);
+}
+[data-theme="dark"]{
+--bg:#0b1121;--bg2:#111827;--surface:rgba(20,30,55,.8);--surfaceSolid:#151e30;
+--border:rgba(96,165,250,.1);--border2:rgba(96,165,250,.15);
+--text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;--text4:#475569;
+--accent:#60a5fa;--accent2:#93bbfd;--accentLight:rgba(96,165,250,.1);--accentLight2:rgba(96,165,250,.05);
+--gold:#fbbf24;--goldBg:rgba(251,191,36,.1);
+--red:#f87171;--redBg:rgba(248,113,113,.08);--orange:#fb923c;--orangeBg:rgba(251,146,60,.08);
+--green:#4ade80;--greenBg:rgba(74,222,128,.08);
+--navBg:rgba(10,20,50,.95);
+--shadow:0 2px 12px rgba(0,0,0,.3);--shadow2:0 8px 32px rgba(0,0,0,.4);
+--cardHover:rgba(96,165,250,.05);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+.nav{backdrop-filter:blur(20px);background:var(--navBg);padding:0 20px;display:flex;align-items:center;height:52px;position:sticky;top:0;z-index:50;border-bottom:1px solid rgba(255,255,255,.06);}
+.nav-brand{font-weight:800;font-size:15px;color:white;margin-right:24px;white-space:nowrap;}
+.nav-tabs{display:flex;gap:2px;height:100%;align-items:end;flex:1;}
+.ntab{padding:8px 16px;font-size:12px;font-weight:600;color:rgba(255,255,255,.5);cursor:pointer;border-radius:10px 10px 0 0;transition:all .2s;border:none;background:none;font-family:inherit;white-space:nowrap;}
+.ntab:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.07);}
+.ntab.active{color:var(--text);background:var(--bg);font-weight:700;}
+.nav-right{display:flex;align-items:center;margin-left:12px;}
+.tbtn{width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:white;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.tbtn:hover{background:rgba(255,255,255,.15);transform:scale(1.1);}
+.main{padding:20px;max-width:1100px;margin:0 auto;}
+.tab-content{display:none;animation:fu .3s ease;}.tab-content.active{display:block;}
+@keyframes fu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* Stat bar */
+.stat-bar{display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+.stat-box{flex:1;min-width:100px;padding:12px 16px;background:var(--surface);border-radius:12px;border:1px solid var(--border);box-shadow:var(--shadow);text-align:center;}
+.stat-val{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:800;color:var(--accent);}
+.stat-val.gold{color:var(--gold);}
+.stat-lbl{font-size:9px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.5px;font-weight:600;}
+
+/* Cards */
+.card{background:var(--surface);backdrop-filter:blur(16px);border-radius:14px;box-shadow:var(--shadow);border:1px solid var(--border);padding:18px;margin-bottom:14px;transition:all .2s;}
+.card:hover{box-shadow:var(--shadow2);background:var(--cardHover);}
+.card-expr{font-size:18px;font-weight:700;color:var(--accent);margin-bottom:4px;}
+.card-meaning{font-size:13px;color:var(--text2);margin-bottom:10px;}
+.card-meta{font-size:11px;color:var(--text3);display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap;}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:600;}
+.badge.due{background:var(--redBg);color:var(--red);}
+.badge.active{background:var(--accentLight);color:var(--accent);}
+.badge.mastered{background:var(--goldBg);color:var(--gold);}
+.badge.overdue{background:var(--orangeBg);color:var(--orange);}
+
+/* Progress dots */
+.prog{display:flex;gap:4px;align-items:center;}
+.prog .dot{width:10px;height:10px;border-radius:50%;background:var(--bg2);transition:all .2s;}
+.prog .dot.filled{background:var(--accent);}
+.prog .dot.gold{background:var(--gold);}
+.prog-label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--text3);margin-left:6px;}
+
+/* Past examples */
+.past-ex{margin:10px 0;padding:8px 12px;background:var(--accentLight2);border-radius:8px;border-left:3px solid var(--accent);}
+.past-ex-title{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.past-ex-item{font-size:12px;color:var(--text2);padding:3px 0;display:flex;gap:8px;}
+.past-ex-item .ex-num{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text4);min-width:16px;}
+.past-ex-item .ex-date{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text4);margin-left:auto;flex-shrink:0;}
+
+/* Input row */
+.input-row{display:flex;gap:8px;margin-top:10px;align-items:center;}
+.input-row input{flex:1;padding:8px 12px;border:1px solid var(--border2);border-radius:8px;font-family:'Outfit',sans-serif;font-size:13px;background:var(--surfaceSolid);color:var(--text);outline:none;transition:border-color .2s;}
+.input-row input:focus{border-color:var(--accent);}
+.btn{padding:8px 16px;border:none;border-radius:8px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px;}
+.btn-primary{background:var(--accent);color:white;}.btn-primary:hover{background:var(--accent2);transform:translateY(-1px);}
+.btn-secondary{background:var(--accentLight);color:var(--accent);border:1px solid var(--border2);}.btn-secondary:hover{background:var(--accent);color:white;}
+.btn-gold{background:var(--gold);color:white;}.btn-gold:hover{opacity:.9;}
+.btn-danger{background:transparent;color:var(--red);border:1px solid var(--redBg);}.btn-danger:hover{background:var(--redBg);}
+.btn-sm{padding:5px 10px;font-size:11px;}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important;}
+
+/* Empty state */
+.empty{text-align:center;padding:40px 20px;color:var(--text4);}
+.empty-icon{font-size:48px;margin-bottom:12px;}
+.empty-text{font-size:14px;font-weight:500;margin-bottom:16px;}
+
+/* All tab - 2 column */
+.all-layout{display:flex;gap:18px;min-height:70vh;}
+.all-left{flex:1;min-width:0;}
+.all-right{width:360px;flex-shrink:0;position:sticky;top:72px;align-self:flex-start;max-height:calc(100vh - 92px);overflow-y:auto;}
+@media(max-width:800px){.all-layout{flex-direction:column;}.all-right{width:100%;position:static;max-height:none;}}
+.all-right::-webkit-scrollbar{width:4px;}.all-right::-webkit-scrollbar-thumb{background:var(--accent);border-radius:2px;}
+
+/* Filter bar */
+.filter-bar{display:flex;gap:8px;margin-bottom:14px;align-items:center;flex-wrap:wrap;}
+.filter-bar select{padding:6px 10px;border:1px solid var(--border2);border-radius:7px;font-family:'Outfit',sans-serif;font-size:12px;background:var(--surfaceSolid);color:var(--text);outline:none;cursor:pointer;}
+.filter-bar input{flex:1;min-width:120px;padding:6px 10px;border:1px solid var(--border2);border-radius:7px;font-family:'Outfit',sans-serif;font-size:12px;background:var(--surfaceSolid);color:var(--text);outline:none;}
+
+/* List item */
+.list-item{padding:12px 14px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all .15s;background:var(--surfaceSolid);}
+.list-item:hover{border-color:var(--accent);background:var(--accentLight2);}
+.list-item.selected{border-color:var(--accent);background:var(--accentLight);box-shadow:0 0 0 2px rgba(37,99,235,.15);}
+.list-item.mastered-item{border-color:var(--gold);background:var(--goldBg);}
+.li-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+.li-expr{font-size:14px;font-weight:600;color:var(--text);}
+.li-meaning{font-size:11px;color:var(--text3);}
+.li-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:6px;}
+.li-next{font-size:10px;color:var(--text4);font-family:'JetBrains Mono',monospace;}
+
+/* Right panel detail */
+.detail-panel{background:var(--surface);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow);padding:20px;transition:all .2s;}
+.dp-expr{font-size:20px;font-weight:800;color:var(--accent);margin-bottom:4px;}
+.dp-meaning{font-size:14px;color:var(--text2);margin-bottom:14px;}
+.dp-section{margin-bottom:14px;}
+.dp-section-title{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+
+/* Timeline */
+.timeline{display:flex;flex-direction:column;gap:0;}
+.tl-item{display:flex;align-items:center;gap:10px;padding:6px 0;position:relative;}
+.tl-item:not(:last-child)::after{content:'';position:absolute;left:9px;top:26px;bottom:-6px;width:2px;background:var(--border2);}
+.tl-dot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;z-index:1;}
+.tl-dot.done{background:var(--accent);color:white;}
+.tl-dot.pending{background:var(--bg2);color:var(--text4);}
+.tl-dot.today{background:var(--red);color:white;}
+.tl-dot.gold{background:var(--gold);color:white;}
+.tl-info{flex:1;font-size:12px;color:var(--text2);}
+.tl-date{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text4);}
+
+/* Add modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;display:none;align-items:center;justify-content:center;animation:fu .15s ease;}
+.modal-overlay.show{display:flex;}
+.modal{background:var(--surfaceSolid);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.2);padding:24px;width:90%;max-width:440px;}
+.modal h3{font-size:16px;font-weight:700;margin-bottom:16px;}
+.modal-field{margin-bottom:12px;}
+.modal-field label{display:block;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px;}
+.modal-field input,.modal-field textarea{width:100%;padding:8px 12px;border:1px solid var(--border2);border-radius:8px;font-family:'Outfit',sans-serif;font-size:13px;background:var(--surfaceSolid);color:var(--text);outline:none;resize:vertical;}
+.modal-field textarea{min-height:60px;}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;}
+
+/* Discover */
+.disc-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+@media(max-width:700px){.disc-grid{grid-template-columns:1fr;}}
+.disc-col{background:var(--surface);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;}
+.disc-col-header{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+.disc-col-title{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.disc-list{padding:8px;max-height:400px;overflow-y:auto;}
+.disc-item{padding:10px 12px;border-radius:8px;cursor:pointer;transition:all .12s;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;}
+.disc-item:hover{background:var(--accentLight2);}
+.disc-item.selected{background:var(--accentLight);}
+.disc-item-left{flex:1;min-width:0;}
+.disc-item-expr{font-size:13px;font-weight:600;color:var(--text);}
+.disc-item-meaning{font-size:11px;color:var(--text3);margin-top:2px;}
+.disc-item .btn-sm{flex-shrink:0;margin-left:8px;}
+.disc-detail{background:var(--surface);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow);padding:20px;margin-top:18px;}
+.disc-detail h4{font-size:18px;font-weight:700;color:var(--accent);margin-bottom:8px;}
+.disc-detail .dd-meaning{font-size:14px;color:var(--text);margin-bottom:12px;line-height:1.5;}
+.disc-detail .dd-section{margin-bottom:12px;}
+.disc-detail .dd-section h5{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.disc-detail .dd-ex{font-size:13px;color:var(--text2);padding:4px 0;padding-left:12px;border-left:2px solid var(--accent);margin-bottom:6px;}
+.loading{display:flex;align-items:center;justify-content:center;padding:30px;color:var(--text3);font-size:13px;gap:8px;}
+.spinner{width:18px;height:18px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.added-badge{font-size:10px;color:var(--green);font-weight:600;}
+</style>
+</head>
+<body>
+<nav class="nav">
+<div class="nav-brand">✦ Vocab Master</div>
+<div class="nav-tabs" id="navTabs"></div>
+<div class="nav-right"><button class="tbtn" id="tb" onclick="toggleTheme()">🌙</button></div>
+</nav>
+<div class="main">
+<div class="tab-content" id="tabToday"></div>
+<div class="tab-content" id="tabAll"></div>
+<div class="tab-content" id="tabDiscover"></div>
+</div>
+<div class="modal-overlay" id="addModal">
+<div class="modal">
+<h3>Add New Expression</h3>
+<div class="modal-field"><label>English Expression</label><input id="mExpr" placeholder='e.g. "break the ice"'></div>
+<div class="modal-field"><label>Meaning (Japanese)</label><input id="mMean" placeholder="e.g. 場を和ませる"></div>
+<div class="modal-field"><label>Example Sentence (optional)</label><textarea id="mEx" placeholder="e.g. She tried to break the ice with a joke."></textarea></div>
+<div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addExpr()">Add</button></div>
+</div>
+</div>
+<script>
+const GEMINI_KEY="AIzaSyCKDmRv0eB3NfbzR5cFM9i2nEvcLyrqDkY";
+const INTERVALS=[1,3,7,14,30];
+const TABS=[{id:'today',label:'📋 Today',render:rToday},{id:'all',label:'📚 All',render:rAll},{id:'discover',label:'🔍 Discover',render:rDiscover}];
+let D={expressions:[],discoverCache:{friends:{list:[],details:{}},suits:{list:[],details:{}}},excludeList:{friends:[],suits:[]}};
+let curTab='today',selId=null,selDisc=null;
+
+function today(){return new Date().toISOString().split('T')[0];}
+function fmtDate(d){if(!d)return'—';const p=d.split('-');return`${+p[1]}/${+p[2]}`;}
+function daysBetween(a,b){return Math.round((new Date(b)-new Date(a))/864e5);}
+
+function calcNext(lastReviewDate,reviewCount){
+  if(reviewCount>=5)return null;
+  const d=new Date(lastReviewDate);
+  d.setDate(d.getDate()+INTERVALS[reviewCount]);
+  return d.toISOString().split('T')[0];
+}
+
+function isDue(e){if(e.mastered)return false;return e.nextReviewDate&&e.nextReviewDate<=today();}
+function isOverdue(e){if(e.mastered||!e.nextReviewDate)return false;return e.nextReviewDate<today();}
+
+function save(){try{localStorage.setItem('evocab1',JSON.stringify(D));}catch(e){}}
+function load(){try{const s=localStorage.getItem('evocab1');if(s)D=JSON.parse(s);if(!D.expressions)D.expressions=[];if(!D.discoverCache)D.discoverCache={friends:{list:[],details:{}},suits:{list:[],details:{}}};if(!D.excludeList)D.excludeList={friends:[],suits:[]};}catch(e){}}
+
+// NAV
+function rNav(){const n=document.getElementById('navTabs');n.innerHTML='';TABS.forEach(t=>{const b=document.createElement('button');b.className='ntab'+(curTab===t.id?' active':'');b.textContent=t.label;b.onclick=()=>{curTab=t.id;rNav();rTab();};n.appendChild(b);});}
+function rTab(){document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('active'));const el=document.getElementById('tab'+curTab.charAt(0).toUpperCase()+curTab.slice(1));el.classList.add('active');TABS.find(t=>t.id===curTab).render();}
+
+// TODAY
+function rToday(){
+  const el=document.getElementById('tabToday');
+  const dues=D.expressions.filter(e=>isDue(e));
+  const masteredThisWeek=D.expressions.filter(e=>e.mastered&&e.reviews.length&&daysBetween(e.reviews[e.reviews.length-1].date,today())<=7).length;
+  const totalActive=D.expressions.filter(e=>!e.mastered).length;
+
+  let h=`<div class="stat-bar"><div class="stat-box"><div class="stat-val">${dues.length}</div><div class="stat-lbl">Due Today</div></div><div class="stat-box"><div class="stat-val">${totalActive}</div><div class="stat-lbl">Active</div></div><div class="stat-box"><div class="stat-val gold">${masteredThisWeek}</div><div class="stat-lbl">Mastered (7d)</div></div></div>`;
+
+  if(!dues.length){
+    if(!D.expressions.length){
+      h+=`<div class="empty"><div class="empty-icon">📖</div><div class="empty-text">No expressions yet. Add some from the All tab!</div><button class="btn btn-primary" onclick="curTab='all';rNav();rTab();">Go to All →</button></div>`;
+    } else {
+      h+=`<div class="empty"><div class="empty-icon">🎉</div><div class="empty-text">All done for today! Great job.</div></div>`;
+    }
+  } else {
+    dues.sort((a,b)=>a.nextReviewDate.localeCompare(b.nextReviewDate));
+    dues.forEach(e=>{
+      const overdue=isOverdue(e);
+      h+=`<div class="card"><div class="card-expr">"${esc(e.expression)}"</div><div class="card-meaning">${esc(e.meaning)}</div><div class="card-meta"><span class="badge ${overdue?'overdue':'due'}">${overdue?'Overdue':'Due Today'}</span><span>Review #${e.reviewCount+1} of 5</span></div>`;
+      h+=renderProg(e);
+      if(e.reviews.length){
+        h+=`<div class="past-ex"><div class="past-ex-title">Past Examples</div>`;
+        e.reviews.forEach((r,i)=>{if(r.example)h+=`<div class="past-ex-item"><span class="ex-num">${i+1}.</span>${esc(r.example)}<span class="ex-date">${fmtDate(r.date)}</span></div>`;});
+        h+=`</div>`;}
+      h+=`<div class="input-row"><input id="rev_${e.id}" placeholder="Write a new example sentence (optional)"><button class="btn btn-primary" onclick="doReview('${e.id}')">✓ Mark as Reviewed</button></div></div>`;
+    });
+  }
+  el.innerHTML=h;
+}
+
+function renderProg(e){
+  let h=`<div class="prog">`;
+  for(let i=0;i<5;i++){const cls=i<e.reviewCount?(e.mastered?'dot gold':'dot filled'):'dot';h+=`<div class="${cls}"></div>`;}
+  h+=`<span class="prog-label">${e.reviewCount}/5</span></div>`;
+  return h;
+}
+
+function doReview(id){
+  const e=D.expressions.find(x=>x.id===id);if(!e)return;
+  const inp=document.getElementById('rev_'+id);
+  const example=inp?inp.value.trim():'';
+  e.reviews.push({date:today(),example});
+  e.reviewCount++;
+  if(e.reviewCount>=5){e.mastered=true;e.nextReviewDate=null;}
+  else{e.nextReviewDate=calcNext(today(),e.reviewCount);}
+  save();rToday();
+}
+
+// ALL
+function rAll(){
+  const el=document.getElementById('tabAll');
+  let h=`<div class="filter-bar"><select id="fFilter" onchange="rAll()"><option value="all">All</option><option value="active">Active</option><option value="due">Due Today</option><option value="mastered">Mastered</option></select><input id="fSearch" placeholder="Search..." oninput="rAll()"><button class="btn btn-primary btn-sm" onclick="openModal()">+ Add New</button></div>`;
+  h+=`<div class="all-layout"><div class="all-left" id="allList"></div><div class="all-right" id="allDetail"></div></div>`;
+  el.innerHTML=h;
+  rAllList();rAllDetail();
+}
+
+function rAllList(){
+  const el=document.getElementById('allList');if(!el)return;
+  const f=document.getElementById('fFilter')?.value||'all';
+  const s=(document.getElementById('fSearch')?.value||'').toLowerCase();
+  let items=D.expressions.filter(e=>{
+    if(f==='active'&&e.mastered)return false;
+    if(f==='due'&&!isDue(e))return false;
+    if(f==='mastered'&&!e.mastered)return false;
+    if(s&&!e.expression.toLowerCase().includes(s)&&!e.meaning.toLowerCase().includes(s))return false;
+    return true;
+  });
+  items.sort((a,b)=>{if(a.mastered!==b.mastered)return a.mastered?1:-1;if(!a.mastered&&!b.mastered){const aDue=isDue(a),bDue=isDue(b);if(aDue!==bDue)return aDue?-1:1;}return(a.nextReviewDate||'9').localeCompare(b.nextReviewDate||'9');});
+
+  if(!items.length){
+    el.innerHTML=`<div class="empty"><div class="empty-icon">📝</div><div class="empty-text">No expressions found</div><button class="btn btn-primary" onclick="openModal()">+ Add First Expression</button></div>`;return;
+  }
+  let h='';
+  items.forEach(e=>{
+    const due=isDue(e);const od=isOverdue(e);
+    h+=`<div class="list-item${selId===e.id?' selected':''}${e.mastered?' mastered-item':''}" onclick="selId='${e.id}';rAllList();rAllDetail();">`;
+    h+=`<div class="li-top"><span class="li-expr">"${esc(e.expression)}"</span>`;
+    h+=renderProg(e);
+    h+=`</div><div class="li-meaning">${esc(e.meaning)}</div>`;
+    h+=`<div class="li-bottom"><span class="li-next">${e.mastered?'🏆 Mastered':due?(od?'⚠️ Overdue':'🔴 Due today'):'Next: '+fmtDate(e.nextReviewDate)}</span></div></div>`;
+  });
+  el.innerHTML=h;
+}
+
+function rAllDetail(){
+  const el=document.getElementById('allDetail');if(!el)return;
+  const e=D.expressions.find(x=>x.id===selId);
+  if(!e){el.innerHTML=`<div class="detail-panel"><div class="empty"><div class="empty-icon">👈</div><div class="empty-text">Select an expression to see details</div></div></div>`;return;}
+
+  let h=`<div class="detail-panel"><div class="dp-expr">"${esc(e.expression)}"</div><div class="dp-meaning">${esc(e.meaning)}</div>`;
+  h+=renderProg(e);
+
+  // Examples
+  h+=`<div class="dp-section"><div class="dp-section-title">Examples</div>`;
+  if(e.reviews.length){
+    e.reviews.forEach((r,i)=>{if(r.example)h+=`<div class="past-ex-item"><span class="ex-num">${i+1}.</span>${esc(r.example)}<span class="ex-date">${fmtDate(r.date)}</span></div>`;});
+  }
+  if(!e.mastered){
+    h+=`<div class="input-row" style="margin-top:8px"><input id="detEx_${e.id}" placeholder="Add an example sentence..."><button class="btn btn-sm btn-secondary" onclick="addDetailEx('${e.id}')">Add</button></div>`;}
+  h+=`</div>`;
+
+  // Timeline
+  h+=`<div class="dp-section"><div class="dp-section-title">Review Timeline</div><div class="timeline">`;
+  h+=`<div class="tl-item"><div class="tl-dot done">📖</div><div class="tl-info">Learned</div><div class="tl-date">${fmtDate(e.learnedDate)}</div></div>`;
+  let cumDays=0;
+  for(let i=0;i<5;i++){
+    cumDays+=INTERVALS[i];
+    const review=e.reviews[i];
+    const done=!!review;
+    const isToday=!done&&e.reviewCount===i&&e.nextReviewDate===today();
+    const dotCls=done?(i===4?'tl-dot gold':'tl-dot done'):isToday?'tl-dot today':'tl-dot pending';
+    const label=`Review ${i+1} (${INTERVALS[i]}d later)`;
+    const date=done?fmtDate(review.date):(e.reviewCount===i&&e.nextReviewDate?fmtDate(e.nextReviewDate):'—');
+    h+=`<div class="tl-item"><div class="${dotCls}">${done?'✓':(i+1)}</div><div class="tl-info">${label}</div><div class="tl-date">${date}</div></div>`;
+  }
+  h+=`</div></div>`;
+
+  h+=`<div style="margin-top:14px;display:flex;gap:8px;justify-content:space-between"><span class="badge ${e.source==='friends'?'active':e.source==='suits'?'active':''}">Source: ${e.source||'manual'}</span><button class="btn btn-danger btn-sm" onclick="delExpr('${e.id}')">Delete</button></div></div>`;
+  el.innerHTML=h;
+}
+
+function addDetailEx(id){
+  const inp=document.getElementById('detEx_'+id);if(!inp||!inp.value.trim())return;
+  const e=D.expressions.find(x=>x.id===id);if(!e)return;
+  // Add as a non-review example (just append to last review or create placeholder)
+  if(e.reviews.length){e.reviews[e.reviews.length-1].example=inp.value.trim();}
+  save();rAllDetail();
+}
+
+// Modal
+function openModal(){document.getElementById('addModal').classList.add('show');document.getElementById('mExpr').focus();}
+function closeModal(){document.getElementById('addModal').classList.remove('show');document.getElementById('mExpr').value='';document.getElementById('mMean').value='';document.getElementById('mEx').value='';}
+function addExpr(expr,meaning,source){
+  const ex=expr||document.getElementById('mExpr').value.trim();
+  const mn=meaning||document.getElementById('mMean').value.trim();
+  const example=source?'':document.getElementById('mEx')?.value?.trim()||'';
+  if(!ex||!mn)return;
+  const e={id:'e_'+Date.now(),expression:ex,meaning:mn,learnedDate:today(),reviewCount:0,nextReviewDate:calcNext(today(),0),mastered:false,reviews:[],source:source||'manual'};
+  if(example)e.reviews.push({date:today(),example});
+  D.expressions.push(e);save();closeModal();
+  selId=e.id;
+  if(curTab==='all'){rAllList();rAllDetail();}
+  return e.id;
+}
+
+function delExpr(id){
+  if(!confirm('Delete this expression?'))return;
+  D.expressions=D.expressions.filter(e=>e.id!==id);
+  if(selId===id)selId=null;
+  save();if(curTab==='all'){rAllList();rAllDetail();}else rToday();
+}
+
+// DISCOVER
+let discLoading={friends:false,suits:false},discDetailLoading=false;
+
+function rDiscover(){
+  const el=document.getElementById('tabDiscover');
+  let h=`<div class="disc-grid">`;
+  [{key:'friends',emoji:'🎬',name:'FRIENDS'},{key:'suits',emoji:'💼',name:'SUITS'}].forEach(show=>{
+    h+=`<div class="disc-col"><div class="disc-col-header"><div class="disc-col-title">${show.emoji} ${show.name}</div><button class="btn btn-primary btn-sm" onclick="genList('${show.key}')" ${discLoading[show.key]?'disabled':''}>Generate 10 ▶</button></div><div class="disc-list" id="disc_${show.key}">`;
+    const list=D.discoverCache[show.key]?.list||[];
+    if(discLoading[show.key]){h+=`<div class="loading"><div class="spinner"></div>Generating...</div>`;}
+    else if(!list.length){h+=`<div class="empty" style="padding:20px"><div class="empty-text" style="font-size:12px">Click "Generate 10" to discover expressions</div></div>`;}
+    else{list.forEach((item,i)=>{
+      const added=D.expressions.some(e=>e.expression.toLowerCase()===item.expression.toLowerCase());
+      h+=`<div class="disc-item${selDisc&&selDisc.key===show.key&&selDisc.i===i?' selected':''}" onclick="selDisc={key:'${show.key}',i:${i}};showDiscDetail('${show.key}',${i})"><div class="disc-item-left"><div class="disc-item-expr">${esc(item.expression)}</div><div class="disc-item-meaning">${esc(item.meaning_ja)}</div></div>${added?'<span class="added-badge">✓ Added</span>':`<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();addFromDisc('${show.key}',${i})">+ Add</button>`}</div>`;
+    });}
+    h+=`</div></div>`;
+  });
+  h+=`</div><div id="discDetailArea"></div>`;
+  el.innerHTML=h;
+}
+
+async function genList(key){
+  discLoading[key]=true;rDiscover();
+  const exclude=D.excludeList[key]||[];
+  const showName=key==='friends'?'Friends':'Suits';
+  const prompt=`You are an English teacher. List 10 useful and interesting English expressions or phrases that appear in the TV show "${showName}". For each, provide the expression and its Japanese meaning. Pick casual, idiomatic, or memorable phrases that are useful in daily conversation.${exclude.length?` Avoid these already listed expressions: ${exclude.join(', ')}`:''}
+
+Respond ONLY in JSON array format: [{"expression":"...","meaning_ja":"..."}]`;
+
+  try{
+    const data=await callGemini(prompt);
+    const parsed=JSON.parse(data);
+    if(!D.discoverCache[key])D.discoverCache[key]={list:[],details:{}};
+    D.discoverCache[key].list=parsed;
+    parsed.forEach(p=>{if(!D.excludeList[key].includes(p.expression))D.excludeList[key].push(p.expression);});
+    save();
+  }catch(e){console.error(e);alert('API error: '+e.message);}
+  discLoading[key]=false;rDiscover();
+}
+
+async function showDiscDetail(key,i){
+  const item=D.discoverCache[key]?.list?.[i];if(!item)return;
+  const area=document.getElementById('discDetailArea');
+  const cacheKey=item.expression;
+  if(D.discoverCache[key].details[cacheKey]){
+    renderDiscDetail(item,D.discoverCache[key].details[cacheKey],key,i);return;
+  }
+  area.innerHTML=`<div class="disc-detail" style="margin-top:18px"><div class="loading"><div class="spinner"></div>Loading details...</div></div>`;
+  const showName=key==='friends'?'Friends':'Suits';
+  const prompt=`Explain the English expression "${item.expression}" as used in the TV show "${showName}".
+Provide:
+1. Detailed meaning in Japanese
+2. Usage context - when and how to use it (in Japanese)
+3. 2-3 example sentences in English
+
+Respond ONLY in JSON: {"meaning_detail":"...","usage":"...","examples":["...","..."]}`;
+
+  try{
+    const data=await callGemini(prompt);
+    const parsed=JSON.parse(data);
+    D.discoverCache[key].details[cacheKey]=parsed;save();
+    renderDiscDetail(item,parsed,key,i);
+  }catch(e){area.innerHTML=`<div class="disc-detail"><p>Error loading details. ${e.message}</p></div>`;}
+}
+
+function renderDiscDetail(item,detail,key,i){
+  const area=document.getElementById('discDetailArea');
+  const added=D.expressions.some(e=>e.expression.toLowerCase()===item.expression.toLowerCase());
+  let h=`<div class="disc-detail"><h4>"${esc(item.expression)}"</h4><div class="dd-meaning">${esc(detail.meaning_detail)}</div>`;
+  h+=`<div class="dd-section"><h5>Usage</h5><p style="font-size:13px;color:var(--text2);line-height:1.5">${esc(detail.usage)}</p></div>`;
+  h+=`<div class="dd-section"><h5>Examples</h5>`;
+  (detail.examples||[]).forEach(ex=>{h+=`<div class="dd-ex">${esc(ex)}</div>`;});
+  h+=`</div>`;
+  h+=added?`<span class="added-badge" style="font-size:13px">✓ Already in your list</span>`:`<button class="btn btn-primary" onclick="addFromDisc('${key}',${i})">+ Add to My List</button>`;
+  h+=`</div>`;
+  area.innerHTML=h;
+}
+
+function addFromDisc(key,i){
+  const item=D.discoverCache[key]?.list?.[i];if(!item)return;
+  if(D.expressions.some(e=>e.expression.toLowerCase()===item.expression.toLowerCase()))return;
+  const showName=key==='friends'?'friends':'suits';
+  addExpr(item.expression,item.meaning_ja,showName);
+  rDiscover();
+}
+
+async function callGemini(prompt){
+  const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
+  const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json'}})});
+  if(!res.ok)throw new Error(`API ${res.status}`);
+  const json=await res.json();
+  const text=json.candidates?.[0]?.content?.parts?.[0]?.text;
+  if(!text)throw new Error('Empty response');
+  return text;
+}
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function toggleTheme(){const h=document.documentElement,c=h.dataset.theme,n=c==='dark'?'light':'dark';h.dataset.theme=n;document.getElementById('tb').textContent=n==='dark'?'☀️':'🌙';try{localStorage.setItem('evtheme',n);}catch(e){}}
+function loadTheme(){try{const t=localStorage.getItem('evtheme');if(t){document.documentElement.dataset.theme=t;document.getElementById('tb').textContent=t==='dark'?'☀️':'🌙';}}catch(e){}}
+
+// Click outside modal
+document.getElementById('addModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeModal();});
+
+load();loadTheme();rNav();rTab();
+</script>
+</body>
+</html>
