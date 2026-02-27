@@ -91,14 +91,14 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 
 /* All layout */
 .al-wrap{display:flex;flex-direction:column;height:calc(100vh - 66px);}
-.al-top{display:flex;gap:18px;flex-shrink:0;padding-bottom:14px;border-bottom:1px solid var(--border);overflow:hidden;}
-.al-top-l{flex:1;min-width:0;max-height:100%;overflow-y:auto;}
-.al-top-l::-webkit-scrollbar{width:4px;}.al-top-l::-webkit-scrollbar-thumb{background:var(--accent);border-radius:2px;}
-.al-top-r{width:380px;flex-shrink:0;max-height:100%;overflow-y:auto;}
-.al-top-r::-webkit-scrollbar{width:4px;}.al-top-r::-webkit-scrollbar-thumb{background:var(--accent);border-radius:2px;}
-.al-bottom{flex:1;overflow-y:auto;padding-top:14px;}
-.al-bottom::-webkit-scrollbar{width:4px;}.al-bottom::-webkit-scrollbar-thumb{background:var(--accent);border-radius:2px;}
-@media(max-width:850px){.al-top{flex-direction:column;overflow:visible;max-height:none;}.al-top-l,.al-top-r{width:100%;max-height:none;}.al-wrap{height:auto;}}
+.al-top{flex-shrink:0;padding-bottom:14px;border-bottom:1px solid var(--border);max-height:45vh;overflow-y:auto;}
+.al-top::-webkit-scrollbar{width:4px;}.al-top::-webkit-scrollbar-thumb{background:var(--accent);border-radius:2px;}
+.al-bot{display:flex;gap:18px;flex:1;overflow:hidden;padding-top:14px;}
+.al-bot-l{flex:1;min-width:0;overflow-y:auto;}
+.al-bot-l::-webkit-scrollbar{width:4px;}.al-bot-l::-webkit-scrollbar-thumb{background:var(--accent);border-radius:2px;}
+.al-bot-r{width:380px;flex-shrink:0;overflow-y:auto;}
+.al-bot-r::-webkit-scrollbar{width:4px;}.al-bot-r::-webkit-scrollbar-thumb{background:var(--accent);border-radius:2px;}
+@media(max-width:850px){.al-top{max-height:none;}.al-bot{flex-direction:column;overflow:visible;}.al-bot-l,.al-bot-r{width:100%;overflow:visible;}.al-wrap{height:auto;}}
 
 .fb{display:flex;gap:8px;margin-bottom:14px;align-items:center;flex-wrap:wrap;}
 .fb select,.fb input{padding:6px 10px;border:1px solid var(--border2);border-radius:7px;font-family:'Outfit',sans-serif;font-size:12px;background:var(--surfaceSolid);color:var(--text);outline:none;}
@@ -259,13 +259,14 @@ function doRev(id,inputId){
   if(ct==='all'){rAllList();rAllDet();}
 }
 
-function speak(text){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=0.9;const voices=speechSynthesis.getVoices();const en=voices.find(v=>v.lang.startsWith('en'));if(en)u.voice=en;speechSynthesis.speak(u);}
+function speak(text){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=0.92;u.pitch=1.05;const voices=speechSynthesis.getVoices();const pref=['Samantha','Karen','Google US English','Microsoft Jenny','Zira','Fiona','Victoria','Moira','Tessa'];let pick=null;for(const p of pref){pick=voices.find(v=>v.name.includes(p)&&v.lang.startsWith('en'));if(pick)break;}if(!pick)pick=voices.find(v=>v.lang.startsWith('en-US'))||voices.find(v=>v.lang.startsWith('en'));if(pick)u.voice=pick;speechSynthesis.speak(u);}
+const spkSvg='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>';
 
 // ALL
 function rAll(){
   const el=document.getElementById('tAll');
   let h=`<div class="fb"><select id="ff" onchange="rAllList()"><option value="all">All</option><option value="active">Active</option><option value="noex">No Example</option><option value="due">Due Today</option><option value="mastered">Mastered</option></select><input id="fs" placeholder="Search..." oninput="rAllList()"><button class="btn btn-p btn-sm" onclick="oMo()">+ Add New</button></div>`;
-  h+=`<div class="al-wrap"><div class="al-top"><div class="al-top-l" id="aR"></div><div class="al-top-r" id="aEM"></div></div><div class="al-bottom" id="aL"></div></div>`;
+  h+=`<div class="al-wrap"><div class="al-top" id="aR"></div><div class="al-bot"><div class="al-bot-l" id="aL"></div><div class="al-bot-r" id="aEM"></div></div></div>`;
   el.innerHTML=h;rAllList();rAllDet();
 }
 function rAllList(){
@@ -298,7 +299,7 @@ function rAllDet(){
   const e=D.expressions.find(x=>x.id===selId);
   if(!e){el.innerHTML=`<div class="dp"><div class="empty" style="padding:20px"><div class="empty-text" style="opacity:.5">Select an expression</div></div></div>`;emEl.innerHTML=`<div class="em"><h4>Example Maker</h4><div class="empty" style="padding:14px"><div class="empty-text" style="font-size:12px">Select an expression first</div></div></div>`;return;}
   const due=isDue(e);const noEx=isNoEx(e);
-  let h=`<div class="dp"><div class="dp-e">"${esc(e.expression)}" <button class="spk" onclick="speak('${esc(e.expression).replace(/'/g,"\\'")}')">&#9654;</button></div><div class="dp-m">${esc(e.meaning)}</div>${rProg(e)}`;
+  let h=`<div class="dp"><div class="dp-e">"${esc(e.expression)}" <button class="spk" onclick="speak('${esc(e.expression).replace(/'/g,"\\'")}')">${spkSvg}</button></div><div class="dp-m">${esc(e.meaning)}</div>${rProg(e)}`;
   // Status alert
   if(noEx){h+=`<div style="margin:12px 0;padding:10px 14px;background:rgba(245,158,11,.1);border-radius:10px;border:1px solid #d97706"><div style="font-size:12px;font-weight:600;color:#d97706;margin-bottom:2px">No example yet</div><div style="font-size:11px;color:var(--text3)">Write your first example below to start the review cycle</div></div>`;}
   else if(due){h+=`<div style="margin:12px 0;padding:10px 14px;background:var(--redBg);border-radius:10px;border:1px solid var(--red)"><div style="font-size:12px;font-weight:600;color:var(--red)">Due for review — write an example below to complete</div></div>`;}
@@ -314,12 +315,12 @@ function rAllDet(){
   // Example Maker (separate panel)
   let em=`<div class="em"><h4>Example Maker</h4>`;
   const exs=allEx(e);
-  if(exs.length){em+=`<div class="dp-st">Saved Examples</div>`;exs.forEach((r,i)=>{em+=`<div class="em-saved"><span class="em-num">${i+1}.</span><span class="et">${esc(r.text)}</span><button class="spk" onclick="speak(\`${esc(r.text).replace(/`/g,'')}\`)">&#9654;</button><span class="emeta">${fmt(r.date)}</span></div>`;});}
+  if(exs.length){em+=`<div class="dp-st">Saved Examples</div>`;exs.forEach((r,i)=>{em+=`<div class="em-saved"><span class="em-num">${i+1}.</span><span class="et">${esc(r.text)}</span><button class="spk" onclick="speak(\`${esc(r.text).replace(/`/g,'')}\`)">${spkSvg}</button><span class="emeta">${fmt(r.date)}</span></div>`;});}
 
   em+=`<div class="dp-st" style="margin-top:12px">AI Suggestions</div>`;
   em+=`<div id="sugArea_${e.id}">`;
   const cached=sugCache[e.id];
-  if(cached){cached.forEach(s=>{em+=`<div class="em-sug-item"><span class="copy-icon" onclick="copySug(this.parentElement,'${e.id}')" title="Click to copy">+</span><span onclick="copySug(this.parentElement,'${e.id}')" style="flex:1;cursor:pointer">${esc(s)}</span><button class="spk" onclick="event.stopPropagation();speak(\`${esc(s).replace(/`/g,'')}\`)">&#9654;</button></div>`;});}
+  if(cached){cached.forEach(s=>{em+=`<div class="em-sug-item"><span class="copy-icon" onclick="copySug(this.parentElement,'${e.id}')" title="Click to copy">+</span><span onclick="copySug(this.parentElement,'${e.id}')" style="flex:1;cursor:pointer">${esc(s)}</span><button class="spk" onclick="event.stopPropagation();speak(\`${esc(s).replace(/`/g,'')}\`)">${spkSvg}</button></div>`;});}
   em+=`</div>`;
   em+=`<button class="btn btn-s btn-sm" onclick="genSug('${e.id}')" style="margin-top:6px" id="sugBtn_${e.id}">Generate Examples</button>`;
 
@@ -348,7 +349,7 @@ async function genSugT(id){
   const prompt=`Generate 5 natural example sentences using the English expression "${e.expression}" (meaning: ${e.meaning}). Each sentence should show a different context or situation. Return ONLY a JSON array of 5 strings.`;
   try{
     const data=await callGem(prompt);const parsed=JSON.parse(data);sugCache[id]=parsed;
-    if(area){let h='';parsed.forEach(s=>{h+=`<div class="em-sug-item"><span class="copy-icon" onclick="copySugT(this.parentElement,'${id}')" title="Click to copy">+</span><span onclick="copySugT(this.parentElement,'${id}')" style="flex:1;cursor:pointer">${esc(s)}</span><button class="spk" onclick="event.stopPropagation();speak(\`${esc(s).replace(/`/g,'')}\`)">&#9654;</button></div>`;});area.innerHTML=h;}
+    if(area){let h='';parsed.forEach(s=>{h+=`<div class="em-sug-item"><span class="copy-icon" onclick="copySugT(this.parentElement,'${id}')" title="Click to copy">+</span><span onclick="copySugT(this.parentElement,'${id}')" style="flex:1;cursor:pointer">${esc(s)}</span><button class="spk" onclick="event.stopPropagation();speak(\`${esc(s).replace(/`/g,'')}\`)">${spkSvg}</button></div>`;});area.innerHTML=h;}
   }catch(err){if(area)area.innerHTML=`<div style="font-size:12px;color:var(--red);padding:8px">Error: ${err.message}</div>`;}
   if(btn){btn.disabled=false;btn.textContent='Generate Examples ▶';}
 }
@@ -363,7 +364,7 @@ async function genSug(id){
     const data=await callGem(prompt);
     const parsed=JSON.parse(data);
     sugCache[id]=parsed;
-    if(area){let h='';parsed.forEach(s=>{h+=`<div class="em-sug-item"><span class="copy-icon" onclick="copySug(this.parentElement,'${id}')" title="Click to copy">+</span><span onclick="copySug(this.parentElement,'${id}')" style="flex:1;cursor:pointer">${esc(s)}</span><button class="spk" onclick="event.stopPropagation();speak(\`${esc(s).replace(/`/g,'')}\`)">&#9654;</button></div>`;});area.innerHTML=h;}
+    if(area){let h='';parsed.forEach(s=>{h+=`<div class="em-sug-item"><span class="copy-icon" onclick="copySug(this.parentElement,'${id}')" title="Click to copy">+</span><span onclick="copySug(this.parentElement,'${id}')" style="flex:1;cursor:pointer">${esc(s)}</span><button class="spk" onclick="event.stopPropagation();speak(\`${esc(s).replace(/`/g,'')}\`)">${spkSvg}</button></div>`;});area.innerHTML=h;}
   }catch(err){if(area)area.innerHTML=`<div style="font-size:12px;color:var(--red);padding:8px">Error: ${err.message}</div>`;}
   if(btn){btn.disabled=false;btn.textContent='Generate Examples ▶';}
 }
