@@ -114,6 +114,12 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 [data-theme="light"] .li.due-hl{border-color:#0891b2;box-shadow:0 0 6px rgba(8,145,178,.15),0 0 14px rgba(8,145,178,.06);animation:cyberPulseL 2s ease-in-out infinite;}
 [data-theme="light"] .li.due-hl:hover{border-color:#0e7490;}
 @keyframes cyberPulseL{0%,100%{box-shadow:0 0 6px rgba(8,145,178,.15),0 0 14px rgba(8,145,178,.06);}50%{box-shadow:0 0 10px rgba(8,145,178,.25),0 0 20px rgba(8,145,178,.1);}}
+.li.noex-hl{border-color:#facc15;box-shadow:0 0 8px rgba(250,204,21,.3),0 0 20px rgba(250,204,21,.1);animation:neonYellow 2s ease-in-out infinite;}
+.li.noex-hl:hover{border-color:#eab308;box-shadow:0 0 12px rgba(250,204,21,.5),0 0 24px rgba(250,204,21,.15);}
+@keyframes neonYellow{0%,100%{box-shadow:0 0 8px rgba(250,204,21,.3),0 0 20px rgba(250,204,21,.1);}50%{box-shadow:0 0 14px rgba(250,204,21,.5),0 0 30px rgba(250,204,21,.15);}}
+[data-theme="light"] .li.noex-hl{border-color:#ca8a04;box-shadow:0 0 6px rgba(202,138,4,.15),0 0 14px rgba(202,138,4,.06);animation:neonYellowL 2s ease-in-out infinite;}
+[data-theme="light"] .li.noex-hl:hover{border-color:#a16207;}
+@keyframes neonYellowL{0%,100%{box-shadow:0 0 6px rgba(202,138,4,.15),0 0 14px rgba(202,138,4,.06);}50%{box-shadow:0 0 10px rgba(202,138,4,.25),0 0 20px rgba(202,138,4,.1);}}
 .li.due-hl{border-color:#22d3ee;box-shadow:0 0 8px rgba(34,211,238,.3),0 0 20px rgba(34,211,238,.1);animation:cyberPulse 2s ease-in-out infinite;}
 @keyframes cyberPulse{0%,100%{box-shadow:0 0 8px rgba(34,211,238,.3),0 0 20px rgba(34,211,238,.1);}50%{box-shadow:0 0 12px rgba(34,211,238,.5),0 0 30px rgba(34,211,238,.15);}}
 [data-theme="light"] .li.due-hl{border-color:#0891b2;box-shadow:0 0 6px rgba(8,145,178,.2),0 0 16px rgba(8,145,178,.08);animation:cyberPulseLight 2s ease-in-out infinite;}
@@ -259,7 +265,10 @@ function doRev(id,inputId){
   if(ct==='all'){rAllList();rAllDet();}
 }
 
-function speak(text){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=0.92;u.pitch=1.05;const voices=speechSynthesis.getVoices();const pref=['Samantha','Karen','Google US English','Microsoft Jenny','Zira','Fiona','Victoria','Moira','Tessa'];let pick=null;for(const p of pref){pick=voices.find(v=>v.name.includes(p)&&v.lang.startsWith('en'));if(pick)break;}if(!pick)pick=voices.find(v=>v.lang.startsWith('en-US'))||voices.find(v=>v.lang.startsWith('en'));if(pick)u.voice=pick;speechSynthesis.speak(u);}
+let spkVoice=null;
+function loadVoice(){const voices=speechSynthesis.getVoices();if(!voices.length)return;const pref=['Samantha','Karen','Google US English','Microsoft Jenny','Zira','Fiona','Victoria','Moira','Tessa'];for(const p of pref){spkVoice=voices.find(v=>v.name.includes(p)&&v.lang.startsWith('en'));if(spkVoice)break;}if(!spkVoice)spkVoice=voices.find(v=>v.lang.startsWith('en-US'))||voices.find(v=>v.lang.startsWith('en'));}
+speechSynthesis.onvoiceschanged=loadVoice;loadVoice();
+function speak(text){speechSynthesis.cancel();if(!spkVoice)loadVoice();const u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=0.92;u.pitch=1.05;if(spkVoice)u.voice=spkVoice;speechSynthesis.speak(u);}
 const spkSvg='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>';
 
 // ALL
@@ -280,7 +289,7 @@ function rAllList(){
   if(!items.length){el.innerHTML=`<div class="empty"><div class="empty-icon" style="font-size:24px;opacity:.5">◆</div><div class="empty-text">No expressions found</div><button class="btn btn-p" onclick="oMo()">+ Add</button></div>`;return;}
   let h='';items.forEach(e=>{
     const due=isDue(e),od=isOD(e),noEx=isNoEx(e),dl=daysLeft(e);
-    h+=`<div class="li${selId===e.id?' sel':''}${e.mastered?' mst':''}${due?' due-hl':''}" onclick="selId='${e.id}';rAllList();rAllDet();">`;
+    h+=`<div class="li${selId===e.id?' sel':''}${e.mastered?' mst':''}${due?' due-hl':''}${noEx?' noex-hl':''}" onclick="selId='${e.id}';rAllList();rAllDet();">`;
     h+=`<div class="li-top"><span class="li-expr">"${esc(e.expression)}"</span>${rProg(e)}</div><div class="li-mean">${esc(e.meaning)}</div>`;
     let status='';
     if(e.mastered)status='Mastered';
