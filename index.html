@@ -584,7 +584,7 @@ function rStats(){
   const maxC=Math.max(...days.map(d=>d.c),1);
   // Mastery timeline (cumulative mastered by date)
   const mDates=[];D.expressions.filter(e=>e.mastered&&e.reviews.length).forEach(e=>{const last=e.reviews[e.reviews.length-1];if(last)mDates.push(last.date);});mDates.sort();
-  const statNums=[{v:total,cls:'sv',lbl:'Total'},{v:mastered,cls:'sv gold',lbl:'Mastered'},{v:active,cls:'sv',lbl:'Active'},{v:noex,cls:'sv',lbl:'No Example'},{v:totalReviews,cls:'sv',lbl:'Reviews'}];
+  const statNums=[{v:total,cls:'sv',lbl:'Total'},{v:active,cls:'sv',lbl:'Active'},{v:noex,cls:'sv',lbl:'No Example'},{v:totalReviews,cls:'sv',lbl:'Reviews'}];
   let h=`<div class="stat-bar" style="margin-bottom:20px">`;
   statNums.forEach((s,i)=>{h+=`<div class="stat-box"><div class="${s.cls}" data-anim="${s.v}" data-delay="${i*80}">0</div><div class="sl">${s.lbl}</div></div>`;});
   h+=`</div>`;
@@ -593,8 +593,9 @@ function rStats(){
   h+=`<div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:20px">`;
   h+=`<div style="background:var(--surface);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow);padding:20px;flex:1;min-width:200px;text-align:center">`;
   h+=`<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Mastery Rate</div>`;
-  h+=`<svg width="100" height="100" viewBox="0 0 100 100" style="display:block;margin:0 auto"><circle cx="50" cy="50" r="42" fill="none" stroke="var(--bg2)" stroke-width="8"/><circle cx="50" cy="50" r="42" fill="none" stroke="var(--gold)" stroke-width="8" stroke-linecap="round" stroke-dasharray="${2*Math.PI*42}" stroke-dashoffset="${2*Math.PI*42}" transform="rotate(-90 50 50)" data-ring="${2*Math.PI*42*(1-pct/100)}" style="transition:stroke-dashoffset .8s ease-out"/><text x="50" y="54" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)" font-family="JetBrains Mono,monospace" data-anim="${pct}" data-suffix="%" data-delay="200">0%</text></svg>`;
-  h+=`<div style="font-size:11px;color:var(--text4);margin-top:8px">${mastered} of ${total} expressions</div></div>`;
+  h+=`<div style="position:relative;display:inline-block"><svg width="100" height="100" viewBox="0 0 100 100" style="display:block;margin:0 auto"><circle cx="50" cy="50" r="42" fill="none" stroke="var(--bg2)" stroke-width="8"/><circle cx="50" cy="50" r="42" fill="none" stroke="var(--gold)" stroke-width="8" stroke-linecap="round" stroke-dasharray="${2*Math.PI*42}" stroke-dashoffset="${2*Math.PI*42}" transform="rotate(-90 50 50)" data-ring="${2*Math.PI*42*(1-pct/100)}" style="transition:stroke-dashoffset .8s ease-out"/><text x="50" y="54" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)" font-family="JetBrains Mono,monospace" data-anim="${pct}" data-suffix="%" data-delay="200">0%</text></svg></div>`;
+  h+=`<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--gold)" style="flex-shrink:0"><path d="M2 8L5.5 4L12 9L18.5 4L22 8L17 13L19 21H5L7 13L2 8Z"/><circle cx="5.5" cy="4" r="1.5"/><circle cx="18.5" cy="4" r="1.5"/><circle cx="12" cy="2.5" r="1.5"/></svg><div style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:800;color:var(--gold)" data-anim="${mastered}" data-delay="150">0</div></div>`;
+  h+=`<div style="font-size:11px;color:var(--text4);margin-top:4px">${mastered} of ${total} mastered</div></div>`;
   // Streak Fire Meter
   const fSz=streak>=8?80:streak>=4?64:streak>=1?52:44;
   const fClr=streak>=8?'var(--red)':streak>=4?'var(--orange)':streak>=1?'var(--gold)':'var(--text4)';
