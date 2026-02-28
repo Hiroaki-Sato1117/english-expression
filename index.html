@@ -35,11 +35,13 @@
 body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 .nav{backdrop-filter:blur(20px);background:var(--navBg);padding:0 20px;display:flex;align-items:center;height:52px;position:sticky;top:0;z-index:50;border-bottom:1px solid rgba(255,255,255,.06);}
 .nav-brand{font-weight:800;font-size:15px;color:white;margin-right:24px;white-space:nowrap;}
-.nav-tabs{display:flex;gap:2px;height:100%;align-items:end;flex:1;}
-.ntab{padding:8px 16px;font-size:12px;font-weight:600;color:rgba(255,255,255,.5);cursor:pointer;border-radius:10px 10px 0 0;transition:all .2s;border:none;background:none;font-family:inherit;white-space:nowrap;position:relative;}
-.ntab-badge{position:absolute;top:2px;right:2px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:#ef4444;color:white;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1;box-shadow:0 1px 4px rgba(239,68,68,.4);}
-.ntab:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.07);}
-.ntab.active{color:var(--text);background:var(--bg);font-weight:700;}
+.nav-tabs{display:flex;gap:0;height:100%;align-items:stretch;flex:1;position:relative;}
+.ntab{padding:0 20px;font-size:12.5px;font-weight:500;color:rgba(255,255,255,.45);cursor:pointer;border:none;background:none;font-family:inherit;white-space:nowrap;position:relative;transition:color .25s;display:flex;align-items:center;letter-spacing:.3px;}
+.ntab-badge{position:absolute;top:8px;right:6px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:#ef4444;color:white;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1;box-shadow:0 1px 4px rgba(239,68,68,.4);}
+.ntab:hover{color:rgba(255,255,255,.85);}
+.ntab.active{color:white;font-weight:700;}
+.ntab.active::after{content:'';position:absolute;bottom:0;left:16px;right:16px;height:2.5px;background:white;border-radius:2px 2px 0 0;animation:tabSlide .25s ease-out;}
+@keyframes tabSlide{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 .nav-right{display:flex;align-items:center;margin-left:12px;gap:6px;}
 .tbtn{width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:white;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;}
 .tbtn:hover{background:rgba(255,255,255,.15);}
@@ -150,6 +152,8 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .cpop{background:var(--surfaceSolid);border-radius:18px;padding:36px 40px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);max-width:360px;animation:popIn .4s cubic-bezier(.34,1.56,.64,1);}
 @keyframes popIn{0%{transform:scale(.7);opacity:0;}100%{transform:scale(1);opacity:1;}}
 @keyframes fadeIn{0%{opacity:0;}100%{opacity:1;}}
+@keyframes flameFlicker{0%,100%{transform:scaleY(1) scaleX(1) translateY(0);opacity:1;}25%{transform:scaleY(1.04) scaleX(.96) translateY(-2px);opacity:.9;}50%{transform:scaleY(.97) scaleX(1.03) translateY(1px);opacity:1;}75%{transform:scaleY(1.06) scaleX(.97) translateY(-3px);opacity:.85;}}
+.flame-anim{animation:flameFlicker 1.5s ease-in-out infinite;transform-origin:center bottom;}
 .cpop-icon{font-size:48px;margin-bottom:12px;}
 .cpop-title{font-size:20px;font-weight:700;color:var(--text);margin-bottom:6px;}
 .cpop-sub{font-size:13px;color:var(--text3);margin-bottom:18px;}
@@ -591,6 +595,16 @@ function rStats(){
   h+=`<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Mastery Rate</div>`;
   h+=`<svg width="100" height="100" viewBox="0 0 100 100" style="display:block;margin:0 auto"><circle cx="50" cy="50" r="42" fill="none" stroke="var(--bg2)" stroke-width="8"/><circle cx="50" cy="50" r="42" fill="none" stroke="var(--gold)" stroke-width="8" stroke-linecap="round" stroke-dasharray="${2*Math.PI*42}" stroke-dashoffset="${2*Math.PI*42}" transform="rotate(-90 50 50)" data-ring="${2*Math.PI*42*(1-pct/100)}" style="transition:stroke-dashoffset .8s ease-out"/><text x="50" y="54" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)" font-family="JetBrains Mono,monospace" data-anim="${pct}" data-suffix="%" data-delay="200">0%</text></svg>`;
   h+=`<div style="font-size:11px;color:var(--text4);margin-top:8px">${mastered} of ${total} expressions</div></div>`;
+  // Streak Fire Meter
+  const fSz=streak>=8?80:streak>=4?64:streak>=1?52:44;
+  const fClr=streak>=8?'var(--red)':streak>=4?'var(--orange)':streak>=1?'var(--gold)':'var(--text4)';
+  const fGlow=streak>=8?'drop-shadow(0 0 12px var(--red)) drop-shadow(0 0 24px var(--orange))':streak>=4?'drop-shadow(0 0 8px var(--orange))':'none';
+  const fMsg=streak>=8?"You're on fire!":streak>=4?'On a roll!':streak>=1?'Keep it up!':'Start your streak!';
+  h+=`<div style="background:var(--surface);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow);padding:20px;flex:1;min-width:140px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center">`;
+  h+=`<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Day Streak</div>`;
+  h+=`<div class="flame-anim" style="filter:${fGlow};line-height:1"><svg width="${fSz}" height="${fSz}" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M32 4C32 4 38 16 38 24C38 28 42 28 44 24C48 32 52 40 44 52C40 56 36 58 32 58C28 58 24 56 20 52C12 40 16 32 20 24C22 28 26 28 26 24C26 16 32 4 32 4Z" fill="${fClr}" opacity=".85"/><path d="M32 20C32 20 36 28 36 34C36 40 32 46 32 46C32 46 28 40 28 34C28 28 32 20 32 20Z" fill="${streak>=4?'var(--gold)':'var(--surface)'}" opacity=".7"/></svg></div>`;
+  h+=`<div style="font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:800;color:${fClr};margin-top:4px" data-anim="${streak}" data-delay="300">0</div>`;
+  h+=`<div style="font-size:11px;color:var(--text3);margin-top:4px;font-weight:600">${fMsg}</div></div>`;
   // Daily Activity Chart
   h+=`<div style="background:var(--surface);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow);padding:20px;flex:2;min-width:300px">`;
   h+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Daily Activity (14 days)</div><div style="display:flex;gap:10px;font-size:9px"><span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:var(--green);display:inline-block"></span>New</span><span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:var(--accent);display:inline-block"></span>Review</span></div></div>`;
