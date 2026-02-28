@@ -36,7 +36,8 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .nav{backdrop-filter:blur(20px);background:var(--navBg);padding:0 20px;display:flex;align-items:center;height:52px;position:sticky;top:0;z-index:50;border-bottom:1px solid rgba(255,255,255,.06);}
 .nav-brand{font-weight:800;font-size:15px;color:white;margin-right:24px;white-space:nowrap;}
 .nav-tabs{display:flex;gap:2px;height:100%;align-items:end;flex:1;}
-.ntab{padding:8px 16px;font-size:12px;font-weight:600;color:rgba(255,255,255,.5);cursor:pointer;border-radius:10px 10px 0 0;transition:all .2s;border:none;background:none;font-family:inherit;white-space:nowrap;}
+.ntab{padding:8px 16px;font-size:12px;font-weight:600;color:rgba(255,255,255,.5);cursor:pointer;border-radius:10px 10px 0 0;transition:all .2s;border:none;background:none;font-family:inherit;white-space:nowrap;position:relative;}
+.ntab-badge{position:absolute;top:2px;right:2px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:#ef4444;color:white;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1;box-shadow:0 1px 4px rgba(239,68,68,.4);}
 .ntab:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.07);}
 .ntab.active{color:var(--text);background:var(--bg);font-weight:700;}
 .nav-right{display:flex;align-items:center;margin-left:12px;gap:6px;}
@@ -132,10 +133,10 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .li-next{font-size:10px;color:var(--text4);font-family:'JetBrains Mono',monospace;}
 
 /* Detail & Example Maker */
-.dp{background:var(--surface);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow);padding:18px;margin-bottom:14px;}
-.dp-e{font-size:20px;font-weight:800;color:var(--accent);margin-bottom:4px;}
-.dp-m{font-size:14px;color:var(--text2);margin-bottom:14px;}
-.dp-s{margin-bottom:14px;}.dp-st{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.dp{background:var(--surface);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow);padding:14px 16px;margin-bottom:10px;}
+.dp-e{font-size:18px;font-weight:800;color:var(--accent);margin-bottom:2px;}
+.dp-m{font-size:13px;color:var(--text2);margin-bottom:10px;}
+.dp-s{margin-bottom:10px;}.dp-st{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
 
 .tl{display:flex;flex-direction:column;gap:0;}
 /* Confetti */
@@ -153,7 +154,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .cpop-title{font-size:20px;font-weight:700;color:var(--text);margin-bottom:6px;}
 .cpop-sub{font-size:13px;color:var(--text3);margin-bottom:18px;}
 .cpop .btn{min-width:120px;}
-.hp{display:flex;align-items:center;gap:0;margin:12px 0 6px;}
+.hp{display:flex;align-items:center;gap:0;margin:8px 0 4px;}
 .hp-step{display:flex;flex-direction:column;align-items:center;flex:1;position:relative;min-width:0;}
 .hp-step:not(:last-child)::after{content:'';position:absolute;top:11px;left:calc(50% + 12px);right:calc(-50% + 12px);height:3px;background:var(--bg2);}
 .hp-step:not(:last-child).hp-done::after{background:var(--accent);}
@@ -246,7 +247,7 @@ function rProg(e){let h='<div class="prog">';for(let i=0;i<5;i++){const c=i<e.re
 function allEx(e){const re=(e.reviews||[]).filter(r=>r.example).map(r=>({text:r.example,date:r.date}));const se=(e.examples||[]).map(x=>({text:x.text,date:x.date}));return[...re,...se];}
 
 // NAV
-function rNav(){const n=document.getElementById('nv');n.innerHTML='';TABS.forEach(t=>{const b=document.createElement('button');b.className='ntab'+(ct===t.id?' active':'');b.textContent=t.label;b.onclick=()=>{ct=t.id;rNav();rT();};n.appendChild(b);});}
+function rNav(){const n=document.getElementById('nv');n.innerHTML='';const dueC=D.expressions.filter(isDue).length;TABS.forEach(t=>{const b=document.createElement('button');b.className='ntab'+(ct===t.id?' active':'');b.textContent=t.label;if(t.id==='today'&&dueC>0){const bg=document.createElement('span');bg.className='ntab-badge';bg.textContent=dueC;b.appendChild(bg);}b.onclick=()=>{ct=t.id;rNav();rT();};n.appendChild(b);});}
 function rT(){document.querySelectorAll('.tc').forEach(e=>e.classList.remove('active'));document.getElementById('t'+ct.charAt(0).toUpperCase()+ct.slice(1)).classList.add('active');TABS.find(t=>t.id===ct).r();}
 
 // TODAY
@@ -313,9 +314,9 @@ function doRev(id,inputId){
   if(justMastered){playMasterSound();fireConfetti(btn);}
   else{playRevSound();fireConfetti(btn);}
   // Slide-out animation on Today tab
-  if(ct==='today'&&card){card.classList.add('card-done');setTimeout(()=>{rToday();},650);}
-  else{if(ct==='today')rToday();}
-  if(ct==='all'){rAllList();rAllDet();}
+  if(ct==='today'&&card){card.classList.add('card-done');setTimeout(()=>{rToday();rNav();},650);}
+  else{if(ct==='today')rToday();rNav();}
+  if(ct==='all'){rAllList();rAllDet();rNav();}
   // Check if all today's reviews are done
   setTimeout(()=>{
     const dues=D.expressions.filter(x=>!x.mastered&&x.reviewCount>0&&x.nextReviewDate&&x.nextReviewDate<=td());
@@ -400,8 +401,8 @@ function rAllDet(){
   const due=isDue(e);const noEx=isNoEx(e);
   let h=`<div class="dp"><div class="dp-e">"${esc(e.expression)}" <button class="spk" onclick="speak('${esc(e.expression).replace(/'/g,"\\'")}')">${spkSvg}</button></div><div class="dp-m">${esc(e.meaning)}</div>${rProg(e)}`;
   // Status alert
-  if(noEx){h+=`<div style="margin:12px 0;padding:10px 14px;background:rgba(245,158,11,.1);border-radius:10px;border:1px solid #d97706"><div style="font-size:12px;font-weight:600;color:#d97706;margin-bottom:2px">No example yet</div><div style="font-size:11px;color:var(--text3)">Write your first example below to start the review cycle</div></div>`;}
-  else if(due){h+=`<div style="margin:12px 0;padding:10px 14px;background:var(--redBg);border-radius:10px;border:1px solid var(--red)"><div style="font-size:12px;font-weight:600;color:var(--red)">Due for review — write an example below to complete</div></div>`;}
+  if(noEx){h+=`<div style="margin:8px 0;padding:8px 12px;background:rgba(245,158,11,.1);border-radius:10px;border:1px solid #d97706"><div style="font-size:11px;font-weight:600;color:#d97706;margin-bottom:1px">No example yet</div><div style="font-size:10px;color:var(--text3)">Write your first example below to start the review cycle</div></div>`;}
+  else if(due){h+=`<div style="margin:8px 0;padding:8px 12px;background:var(--redBg);border-radius:10px;border:1px solid var(--red)"><div style="font-size:11px;font-weight:600;color:var(--red)">Due for review — write an example below to complete</div></div>`;}
   // Horizontal Progress Bar
   h+=`<div class="dp-s"><div class="dp-st">Review Progress</div><div class="hp">`;
   // Learned step
@@ -409,7 +410,7 @@ function rAllDet(){
   for(let i=0;i<5;i++){const rv=e.reviews[i];const dn=!!rv;const isT=!dn&&e.reviewCount===i&&e.nextReviewDate===td();const dc=dn?(i===4?'hp-dot gld':'hp-dot done'):isT?'hp-dot tod':'hp-dot pend';const sc=dn?(i===4?'hp-step hp-gld':'hp-step hp-done'):'hp-step';
     h+=`<div class="${sc}"><div class="${dc}">${dn?'✓':(i+1)}</div><div class="hp-lbl">${INTV[i]}d</div><div class="hp-date">${dn?fmt(rv.date):(e.reviewCount===i&&e.nextReviewDate?fmt(e.nextReviewDate):'')}</div></div>`;}
   h+=`</div></div>`;
-  h+=`<div style="display:flex;gap:8px;justify-content:space-between;margin-top:10px"><span class="badge active">${e.source||'manual'}</span><button class="btn btn-d btn-sm" onclick="delE('${e.id}')">Delete</button></div></div>`;
+  h+=`<div style="display:flex;gap:8px;justify-content:space-between;margin-top:6px"><span class="badge active">${e.source||'manual'}</span><button class="btn btn-d btn-sm" onclick="delE('${e.id}')">Delete</button></div></div>`;
   el.innerHTML=h;
 
   // Example Maker (separate panel)
@@ -495,7 +496,16 @@ function saveEx(id){
     if(!e.examples)e.examples=[];
     e.examples.push({date:td(),text:txt});
   }
-  save();rAllList();rAllDet();
+  save();
+  // Effects for activation and review
+  const btn=document.querySelector('.em-actions .btn-p');
+  if(noEx){playRevSound();fireConfetti(btn);}
+  else if(due){
+    const justMastered=e.reviewCount>=5&&e.mastered;
+    if(justMastered){playMasterSound();fireConfetti(btn);}
+    else{playRevSound();fireConfetti(btn);}
+  }
+  rAllList();rAllDet();rNav();
   if(ct==='today')rToday();
 }
 
@@ -511,7 +521,7 @@ function addE(expr,mean,src){
   if(ct==='all'){rAllList();rAllDet();}
   return e.id;
 }
-function delE(id){if(!confirm('Delete this expression?'))return;D.expressions=D.expressions.filter(e=>e.id!==id);if(selId===id)selId=null;save();if(ct==='all'){rAllList();rAllDet();}else rToday();}
+function delE(id){if(!confirm('Delete this expression?'))return;D.expressions=D.expressions.filter(e=>e.id!==id);if(selId===id)selId=null;save();rNav();if(ct==='all'){rAllList();rAllDet();}else rToday();}
 
 // STATS
 function rStats(){
@@ -611,7 +621,12 @@ function rnDD(it,det,k,i){
   h+=`</div>${added?'<span class="added-badge" style="font-size:13px">✓ Already in your list</span>':`<button class="btn btn-p" onclick="addFD('${k}',${i})">+ Add to My List</button>`}</div>`;
   area.innerHTML=h;
 }
-function addFD(k,i){const it=D.discCache[k]?.list?.[i];if(!it)return;if(D.expressions.some(e=>e.expression.toLowerCase()===it.expression.toLowerCase()))return;addE(it.expression,it.meaning_ja,k);rDisc();}
+function addFD(k,i){const it=D.discCache[k]?.list?.[i];if(!it)return;if(D.expressions.some(e=>e.expression.toLowerCase()===it.expression.toLowerCase()))return;addE(it.expression,it.meaning_ja,k);
+  // Partial update: replace just the button in the list item without full re-render
+  const listEl=document.getElementById('dl_'+k);if(listEl){const items=listEl.querySelectorAll('.di');if(items[i]){const btnEl=items[i].querySelector('.btn');if(btnEl){btnEl.outerHTML='<span class="added-badge">✓ Added</span>';}}}
+  // Also update detail area if showing this item
+  const area=document.getElementById('ddArea');if(area&&selDi&&selDi.k===k&&selDi.i===i){const det=D.discCache[k].details[it.expression];if(det)rnDD(it,det,k,i);}
+}
 
 async function callGem(prompt){
   const key=getGKEY();
