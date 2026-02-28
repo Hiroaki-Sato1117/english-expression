@@ -147,7 +147,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .card.card-done{animation:cardDone .6s ease-out forwards;pointer-events:none;}
 /* Completion popup */
 .cpop-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:center;justify-content:center;animation:fadeIn .3s;}
-.cpop{background:var(--card);border-radius:18px;padding:36px 40px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);max-width:360px;animation:popIn .4s cubic-bezier(.34,1.56,.64,1);}
+.cpop{background:var(--surfaceSolid);border-radius:18px;padding:36px 40px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);max-width:360px;animation:popIn .4s cubic-bezier(.34,1.56,.64,1);}
 @keyframes popIn{0%{transform:scale(.7);opacity:0;}100%{transform:scale(1);opacity:1;}}
 @keyframes fadeIn{0%{opacity:0;}100%{opacity:1;}}
 .cpop-icon{font-size:48px;margin-bottom:12px;}
@@ -252,7 +252,7 @@ const DISC_CATS=[
 ];
 const TABS=[{id:'all',label:'All',r:rAll},{id:'today',label:'Today',r:rToday},{id:'stats',label:'Stats',r:rStats},{id:'discover',label:'Discover',r:rDisc}];
 let D={expressions:[],discCache:{friends:{list:[],details:{}},suits:{list:[],details:{}}},excl:{friends:[],suits:[]}};
-let ct='all',selId=null,selDi=null,sugCache={};
+let ct=(()=>{try{const t=localStorage.getItem('evtab');return t&&['all','today','stats','discover'].includes(t)?t:'all';}catch(e){return'all';}})(),selId=null,selDi=null,sugCache={};
 
 const td=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
 const fmt=d=>d?((p=d.split('-'))&&`${+p[1]}/${+p[2]}`):'—';
@@ -268,7 +268,7 @@ function rProg(e){let h='<div class="prog">';for(let i=0;i<5;i++){const c=i<e.re
 function allEx(e){const re=(e.reviews||[]).filter(r=>r.example).map(r=>({text:r.example,date:r.date}));const se=(e.examples||[]).map(x=>({text:x.text,date:x.date}));return[...re,...se];}
 
 // NAV
-function rNav(){const n=document.getElementById('nv');n.innerHTML='';const dueC=D.expressions.filter(isDue).length;TABS.forEach(t=>{const b=document.createElement('button');b.className='ntab'+(ct===t.id?' active':'');b.textContent=t.label;if(t.id==='today'&&dueC>0){const bg=document.createElement('span');bg.className='ntab-badge';bg.textContent=dueC;b.appendChild(bg);}b.onclick=()=>{ct=t.id;rNav();rT();};n.appendChild(b);});}
+function rNav(){const n=document.getElementById('nv');n.innerHTML='';const dueC=D.expressions.filter(isDue).length;TABS.forEach(t=>{const b=document.createElement('button');b.className='ntab'+(ct===t.id?' active':'');b.textContent=t.label;if(t.id==='today'&&dueC>0){const bg=document.createElement('span');bg.className='ntab-badge';bg.textContent=dueC;b.appendChild(bg);}b.onclick=()=>{ct=t.id;try{localStorage.setItem('evtab',ct);}catch(e){}rNav();rT();};n.appendChild(b);});}
 function rT(){document.querySelectorAll('.tc').forEach(e=>e.classList.remove('active'));document.getElementById('t'+ct.charAt(0).toUpperCase()+ct.slice(1)).classList.add('active');TABS.find(t=>t.id===ct).r();}
 
 // TODAY
@@ -485,6 +485,7 @@ async function genSugT(id){
   try{
     const data=await callGem(prompt);const parsed=JSON.parse(data);sugCache[id]=parsed;
     if(area){let h='';parsed.forEach(s=>{const en=typeof s==='string'?s:s.en;const ja=typeof s==='string'?'':s.ja;h+=`<div class="em-sug-item"><span class="copy-icon" onclick="copySugT(this.parentElement,'${id}')" title="Click to copy">+</span><span onclick="copySugT(this.parentElement,'${id}')" style="flex:1;cursor:pointer"><span>${esc(en)}</span>${ja?`<div style="font-size:10px;color:var(--text4);margin-top:2px">${esc(ja)}</div>`:''}</span><button class="spk" onclick="event.stopPropagation();speak(\`${esc(en).replace(/`/g,'')}\`)">${spkSvg}</button></div>`;});area.innerHTML=h;}
+    playGenSound();
   }catch(err){if(area)area.innerHTML=`<div style="font-size:12px;color:var(--red);padding:8px">Error: ${err.message}</div>`;}
   if(btn){btn.disabled=false;btn.textContent='Generate Examples ▶';}
 }
@@ -500,6 +501,7 @@ async function genSug(id){
     const parsed=JSON.parse(data);
     sugCache[id]=parsed;
     if(area){let h='';parsed.forEach(s=>{const en=typeof s==='string'?s:s.en;const ja=typeof s==='string'?'':s.ja;h+=`<div class="em-sug-item"><span class="copy-icon" onclick="copySug(this.parentElement,'${id}')" title="Click to copy">+</span><span onclick="copySug(this.parentElement,'${id}')" style="flex:1;cursor:pointer"><span>${esc(en)}</span>${ja?`<div style="font-size:10px;color:var(--text4);margin-top:2px">${esc(ja)}</div>`:''}</span><button class="spk" onclick="event.stopPropagation();speak(\`${esc(en).replace(/`/g,'')}\`)">${spkSvg}</button></div>`;});area.innerHTML=h;}
+    playGenSound();
   }catch(err){if(area)area.innerHTML=`<div style="font-size:12px;color:var(--red);padding:8px">Error: ${err.message}</div>`;}
   if(btn){btn.disabled=false;btn.textContent='Generate Examples ▶';}
 }
@@ -565,16 +567,16 @@ function rStats(){
   const el=document.getElementById('tStats');
   const total=D.expressions.length;
   const mastered=D.expressions.filter(e=>e.mastered).length;
-  const active=D.expressions.filter(e=>!e.mastered&&e.activated).length;
   const noex=D.expressions.filter(e=>isNoEx(e)).length;
+  const active=total-mastered-noex;
   const totalReviews=D.expressions.reduce((s,e)=>s+e.reviewCount,0);
   const totalExamples=D.expressions.reduce((s,e)=>s+allEx(e).length,0);
   // Streak: consecutive days with at least 1 review
   const revDates=new Set();D.expressions.forEach(e=>(e.reviews||[]).forEach(r=>{if(r.date)revDates.add(r.date);}));
   let streak=0;const d=new Date();
   for(let i=0;i<365;i++){const ds=new Date(d);ds.setDate(ds.getDate()-i);const dk=ds.getFullYear()+'-'+String(ds.getMonth()+1).padStart(2,'0')+'-'+String(ds.getDate()).padStart(2,'0');if(revDates.has(dk))streak++;else if(i>0)break;}
-  // Daily activity (last 14 days)
-  const days=[];for(let i=13;i>=0;i--){const ds=new Date();ds.setDate(ds.getDate()-i);const dk=ds.getFullYear()+'-'+String(ds.getMonth()+1).padStart(2,'0')+'-'+String(ds.getDate()).padStart(2,'0');let cnt=0;D.expressions.forEach(e=>(e.reviews||[]).forEach(r=>{if(r.date===dk)cnt++;}));D.expressions.forEach(e=>(e.examples||[]).forEach(x=>{if(x.date===dk)cnt++;}));days.push({d:dk,c:cnt,label:(ds.getMonth()+1)+'/'+ds.getDate()});}
+  // Daily activity (last 14 days) - split into new registrations vs reviews
+  const days=[];for(let i=13;i>=0;i--){const ds=new Date();ds.setDate(ds.getDate()-i);const dk=ds.getFullYear()+'-'+String(ds.getMonth()+1).padStart(2,'0')+'-'+String(ds.getDate()).padStart(2,'0');let nw=0,rev=0;D.expressions.forEach(e=>{if(e.learnedDate===dk)nw++;});D.expressions.forEach(e=>(e.reviews||[]).forEach(r=>{if(r.date===dk)rev++;}));days.push({d:dk,nw,rev,c:nw+rev,label:(ds.getMonth()+1)+'/'+ds.getDate()});}
   const maxC=Math.max(...days.map(d=>d.c),1);
   // Mastery timeline (cumulative mastered by date)
   const mDates=[];D.expressions.filter(e=>e.mastered&&e.reviews.length).forEach(e=>{const last=e.reviews[e.reviews.length-1];if(last)mDates.push(last.date);});mDates.sort();
@@ -591,12 +593,14 @@ function rStats(){
   h+=`<div style="font-size:11px;color:var(--text4);margin-top:8px">${mastered} of ${total} expressions</div></div>`;
   // Daily Activity Chart
   h+=`<div style="background:var(--surface);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow);padding:20px;flex:2;min-width:300px">`;
-  h+=`<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Daily Activity (14 days)</div>`;
-  h+=`<div style="display:flex;align-items:end;gap:4px;height:80px">`;
+  h+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Daily Activity (14 days)</div><div style="display:flex;gap:10px;font-size:9px"><span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:var(--green);display:inline-block"></span>New</span><span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:var(--accent);display:inline-block"></span>Review</span></div></div>`;
+  h+=`<div style="display:flex;gap:4px;height:90px">`;
   days.forEach((day,idx)=>{
     const ht=Math.max(day.c/maxC*100,day.c?8:2);
+    const revPct=day.c?day.rev/day.c*100:0;
+    const nwPct=day.c?day.nw/day.c*100:0;
     const isToday=day.d===td();
-    h+=`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px"><div style="font-family:JetBrains Mono,monospace;font-size:8px;color:var(--text4);min-height:12px">${day.c||''}</div><div class="stat-bar-anim" data-ht="${ht}" data-delay="${idx*40}" style="width:100%;height:0%;background:${isToday?'var(--accent)':day.c?'var(--accent)':'var(--bg2)'};opacity:${isToday?1:day.c?.7:.3};border-radius:3px 3px 0 0;min-height:2px;transition:height .5s cubic-bezier(.34,1.56,.64,1)"></div><div style="font-size:8px;color:var(--text4);white-space:nowrap">${day.label}</div></div>`;
+    h+=`<div style="flex:1;display:flex;flex-direction:column;align-items:center"><div style="font-family:JetBrains Mono,monospace;font-size:8px;color:var(--text4);min-height:12px;flex-shrink:0">${day.c||''}</div><div style="width:100%;flex:1;position:relative"><div class="stat-bar-anim" data-ht="${ht}" data-delay="${idx*40}" style="position:absolute;bottom:0;left:0;right:0;height:0%;display:flex;flex-direction:column;justify-content:flex-end;border-radius:3px 3px 0 0;overflow:hidden;min-height:2px;opacity:${isToday?1:day.c?.8:.2};transition:height .5s cubic-bezier(.34,1.56,.64,1)"><div style="width:100%;flex:0 0 ${revPct}%;background:var(--accent)"></div><div style="width:100%;flex:0 0 ${nwPct}%;background:var(--green)"></div></div></div><div style="font-size:8px;color:var(--text4);white-space:nowrap;flex-shrink:0;${isToday?'font-weight:700;color:var(--accent)':''}">${day.label}</div></div>`;
   });
   h+=`</div></div></div>`;
   // Review distribution (bar chart)
@@ -669,7 +673,7 @@ async function genDL(k){
   dLoad[k]=true;rDisc();const exc=D.excl[k]||[];const tp=DISC_TOPICS[k];
   const prompt=tp.prompt+(exc.length?` Avoid: ${exc.join(', ')}`:'')+ '\nRespond ONLY as JSON array: [{"expression":"...","meaning_ja":"..."}]';
   try{const data=await callGem(prompt);const parsed=JSON.parse(data);if(!D.discCache[k])D.discCache[k]={list:[],details:{}};D.discCache[k].list=parsed;parsed.forEach(p=>{if(!D.excl[k].includes(p.expression))D.excl[k].push(p.expression);});save();}catch(e){alert('API error: '+e.message);}
-  dLoad[k]=false;rDisc();
+  dLoad[k]=false;playGenSound();setTimeout(()=>rDisc(),50);
 }
 async function shDD(k,i){
   const it=D.discCache[k]?.list?.[i];if(!it)return;const area=document.getElementById('ddArea');
@@ -685,6 +689,7 @@ function rnDD(it,det,k,i){
   h+=`</div>${added?'<span class="added-badge" style="font-size:13px">✓ Already in your list</span>':`<button class="btn btn-p" onclick="addFD('${k}',${i})">+ Add to My List</button>`}</div>`;
   area.innerHTML=h;
 }
+function playGenSound(){try{const ac=new(window.AudioContext||window.webkitAudioContext)();const g=ac.createGain();g.connect(ac.destination);g.gain.setValueAtTime(0.2,ac.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ac.currentTime+0.5);const notes=[440,554,659];notes.forEach((f,i)=>{const o=ac.createOscillator();o.type='triangle';o.frequency.value=f;const og=ac.createGain();og.connect(g);og.gain.setValueAtTime(0.2,ac.currentTime+i*0.1);og.gain.exponentialRampToValueAtTime(0.01,ac.currentTime+i*0.1+0.2);o.connect(og);o.start(ac.currentTime+i*0.1);o.stop(ac.currentTime+i*0.1+0.2);});}catch(e){}}
 function playAddSound(){try{const ac=new(window.AudioContext||window.webkitAudioContext)();const g=ac.createGain();g.connect(ac.destination);g.gain.setValueAtTime(0.25,ac.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ac.currentTime+0.3);const o=ac.createOscillator();o.type='sine';o.frequency.setValueAtTime(660,ac.currentTime);o.frequency.setValueAtTime(880,ac.currentTime+0.1);o.connect(g);o.start(ac.currentTime);o.stop(ac.currentTime+0.3);}catch(e){}}
 function addFD(k,i){const it=D.discCache[k]?.list?.[i];if(!it)return;if(D.expressions.some(e=>e.expression.toLowerCase()===it.expression.toLowerCase()))return;addE(it.expression,it.meaning_ja,k);
   playAddSound();
