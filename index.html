@@ -275,12 +275,14 @@ function rT(){document.querySelectorAll('.tc').forEach(e=>e.classList.remove('ac
 function rToday(){
   const el=document.getElementById('tToday');
   const dues=D.expressions.filter(isDue).sort((a,b)=>(a.nextReviewDate||'').localeCompare(b.nextReviewDate||''));
+  const noExItems=D.expressions.filter(isNoEx).sort((a,b)=>(a.learnedDate||'').localeCompare(b.learnedDate||''));
   const mw=D.expressions.filter(e=>e.mastered&&e.reviews.length&&(new Date(td())-new Date(e.reviews[e.reviews.length-1].date))/864e5<=7).length;
   const active=D.expressions.filter(e=>!e.mastered).length;
-  let h=`<div class="stat-bar"><div class="stat-box"><div class="sv">${dues.length}</div><div class="sl">Due Today</div></div><div class="stat-box"><div class="sv">${active}</div><div class="sl">Active</div></div><div class="stat-box"><div class="sv gold">${mw}</div><div class="sl">Mastered (5 reviews)</div></div></div>`;
-  if(!dues.length){
+  let h=`<div class="stat-bar"><div class="stat-box"><div class="sv">${dues.length}</div><div class="sl">Due Today</div></div><div class="stat-box"><div class="sv">${noExItems.length}</div><div class="sl">No Example</div></div><div class="stat-box"><div class="sv">${active}</div><div class="sl">Active</div></div><div class="stat-box"><div class="sv gold">${mw}</div><div class="sl">Mastered (5 reviews)</div></div></div>`;
+  if(!dues.length&&!noExItems.length){
     h+=D.expressions.length?`<div class="empty"><div class="empty-icon" style="font-size:24px;opacity:.5">◆</div><div class="empty-text">All done for today!</div></div>`:`<div class="empty"><div class="empty-icon" style="font-size:24px;opacity:.5">◆</div><div class="empty-text">No expressions yet</div><button class="btn btn-p" onclick="ct='all';rNav();rT();">Go to All →</button></div>`;
   } else {
+    if(dues.length){
     h+=`<div style="margin-bottom:14px;padding:10px 16px;background:var(--accentLight);border-radius:10px;border:1px solid var(--border2);display:flex;align-items:center;gap:8px"><span style="font-size:13px;font-weight:600;color:var(--accent)">${dues.length} review${dues.length>1?'s':''} remaining</span><div style="flex:1;height:6px;background:var(--bg2);border-radius:3px;overflow:hidden"><div style="height:100%;background:var(--accent);border-radius:3px;width:${Math.round((1-dues.length/Math.max(dues.length+mw,1))*100)}%;transition:width .3s"></div></div></div>`;
     dues.forEach(e=>{
       const od=isOD(e);const exs=allEx(e);
@@ -290,6 +292,15 @@ function rToday(){
       h+=`<div style="margin:10px 0"><div class="dp-st">AI Suggestions</div><div id="tsug_${e.id}"></div><button class="btn btn-s btn-sm" onclick="genSugT('${e.id}')" id="tsugBtn_${e.id}">Generate Examples ▶</button></div>`;
       h+=`<div class="ir"><textarea id="trev_${e.id}" placeholder="Write or paste an example sentence to complete review..." rows="1"></textarea><button class="btn btn-p" onclick="doRev('${e.id}','trev_${e.id}')">Save & Review ✓</button></div></div>`;
     });
+    }
+    if(noExItems.length){
+    h+=`<div style="margin:18px 0 10px;font-size:13px;font-weight:700;color:var(--orange);display:flex;align-items:center;gap:6px"><span style="font-size:16px">⚡</span> No Example Yet (${noExItems.length})</div>`;
+    noExItems.forEach(e=>{
+      h+=`<div class="card" style="border-left:3px solid var(--orange)"><div class="c-expr">"${esc(e.expression)}"</div><div class="c-mean">${esc(e.meaning)}</div><div class="c-meta"><span class="badge noex">No Example</span><span>Added ${fmt(e.learnedDate)}</span></div>`;
+      h+=`<div style="margin:10px 0"><div class="dp-st">AI Suggestions</div><div id="tsug_${e.id}"></div><button class="btn btn-s btn-sm" onclick="genSugT('${e.id}')" id="tsugBtn_${e.id}">Generate Examples ▶</button></div>`;
+      h+=`<div class="ir"><textarea id="trev_${e.id}" placeholder="Write an example sentence to activate this expression..." rows="1"></textarea><button class="btn btn-p" onclick="doRev('${e.id}','trev_${e.id}')">Save & Activate ✓</button></div></div>`;
+    });
+    }
   }
   el.innerHTML=h;
 }
@@ -545,6 +556,11 @@ function addE(expr,mean,src){
 function delE(id){if(!confirm('Delete this expression?'))return;D.expressions=D.expressions.filter(e=>e.id!==id);if(selId===id)selId=null;save();rNav();if(ct==='all'){rAllList();rAllDet();}else rToday();}
 
 // STATS
+function animateNum(el,target,duration){
+  const start=performance.now();
+  const step=(now)=>{const p=Math.min((now-start)/duration,1);const ease=1-Math.pow(1-p,3);el.textContent=Math.round(ease*target);if(p<1)requestAnimationFrame(step);};
+  requestAnimationFrame(step);
+}
 function rStats(){
   const el=document.getElementById('tStats');
   const total=D.expressions.length;
@@ -562,44 +578,54 @@ function rStats(){
   const maxC=Math.max(...days.map(d=>d.c),1);
   // Mastery timeline (cumulative mastered by date)
   const mDates=[];D.expressions.filter(e=>e.mastered&&e.reviews.length).forEach(e=>{const last=e.reviews[e.reviews.length-1];if(last)mDates.push(last.date);});mDates.sort();
+  const statNums=[{v:total,cls:'sv',lbl:'Total'},{v:mastered,cls:'sv gold',lbl:'Mastered'},{v:active,cls:'sv',lbl:'Active'},{v:noex,cls:'sv',lbl:'No Example'},{v:streak,cls:'sv',lbl:'Day Streak'},{v:totalReviews,cls:'sv',lbl:'Reviews'}];
   let h=`<div class="stat-bar" style="margin-bottom:20px">`;
-  h+=`<div class="stat-box"><div class="sv">${total}</div><div class="sl">Total</div></div>`;
-  h+=`<div class="stat-box"><div class="sv gold">${mastered}</div><div class="sl">Mastered</div></div>`;
-  h+=`<div class="stat-box"><div class="sv">${active}</div><div class="sl">Active</div></div>`;
-  h+=`<div class="stat-box"><div class="sv">${noex}</div><div class="sl">No Example</div></div>`;
-  h+=`<div class="stat-box"><div class="sv">${streak}</div><div class="sl">Day Streak</div></div>`;
-  h+=`<div class="stat-box"><div class="sv">${totalReviews}</div><div class="sl">Reviews</div></div>`;
+  statNums.forEach((s,i)=>{h+=`<div class="stat-box"><div class="${s.cls}" data-anim="${s.v}" data-delay="${i*80}">0</div><div class="sl">${s.lbl}</div></div>`;});
   h+=`</div>`;
   // Progress ring
   const pct=total?Math.round(mastered/total*100):0;
   h+=`<div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:20px">`;
   h+=`<div style="background:var(--surface);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow);padding:20px;flex:1;min-width:200px;text-align:center">`;
   h+=`<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Mastery Rate</div>`;
-  h+=`<svg width="100" height="100" viewBox="0 0 100 100" style="display:block;margin:0 auto"><circle cx="50" cy="50" r="42" fill="none" stroke="var(--bg2)" stroke-width="8"/><circle cx="50" cy="50" r="42" fill="none" stroke="var(--gold)" stroke-width="8" stroke-linecap="round" stroke-dasharray="${2*Math.PI*42}" stroke-dashoffset="${2*Math.PI*42*(1-pct/100)}" transform="rotate(-90 50 50)" style="transition:stroke-dashoffset .5s"/><text x="50" y="54" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)" font-family="JetBrains Mono,monospace">${pct}%</text></svg>`;
+  h+=`<svg width="100" height="100" viewBox="0 0 100 100" style="display:block;margin:0 auto"><circle cx="50" cy="50" r="42" fill="none" stroke="var(--bg2)" stroke-width="8"/><circle cx="50" cy="50" r="42" fill="none" stroke="var(--gold)" stroke-width="8" stroke-linecap="round" stroke-dasharray="${2*Math.PI*42}" stroke-dashoffset="${2*Math.PI*42}" transform="rotate(-90 50 50)" data-ring="${2*Math.PI*42*(1-pct/100)}" style="transition:stroke-dashoffset .8s ease-out"/><text x="50" y="54" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)" font-family="JetBrains Mono,monospace" data-anim="${pct}" data-suffix="%" data-delay="200">0%</text></svg>`;
   h+=`<div style="font-size:11px;color:var(--text4);margin-top:8px">${mastered} of ${total} expressions</div></div>`;
   // Daily Activity Chart
   h+=`<div style="background:var(--surface);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow);padding:20px;flex:2;min-width:300px">`;
   h+=`<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Daily Activity (14 days)</div>`;
   h+=`<div style="display:flex;align-items:end;gap:4px;height:80px">`;
-  days.forEach(day=>{
+  days.forEach((day,idx)=>{
     const ht=Math.max(day.c/maxC*100,day.c?8:2);
     const isToday=day.d===td();
-    h+=`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px"><div style="font-family:JetBrains Mono,monospace;font-size:8px;color:var(--text4);min-height:12px">${day.c||''}</div><div style="width:100%;height:${ht}%;background:${isToday?'var(--accent)':day.c?'var(--accent)':'var(--bg2)'};opacity:${isToday?1:day.c?.7:.3};border-radius:3px 3px 0 0;min-height:2px;transition:height .3s"></div><div style="font-size:8px;color:var(--text4);white-space:nowrap">${day.label}</div></div>`;
+    h+=`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px"><div style="font-family:JetBrains Mono,monospace;font-size:8px;color:var(--text4);min-height:12px">${day.c||''}</div><div class="stat-bar-anim" data-ht="${ht}" data-delay="${idx*40}" style="width:100%;height:0%;background:${isToday?'var(--accent)':day.c?'var(--accent)':'var(--bg2)'};opacity:${isToday?1:day.c?.7:.3};border-radius:3px 3px 0 0;min-height:2px;transition:height .5s cubic-bezier(.34,1.56,.64,1)"></div><div style="font-size:8px;color:var(--text4);white-space:nowrap">${day.label}</div></div>`;
   });
   h+=`</div></div></div>`;
-  // Review distribution
+  // Review distribution (bar chart)
+  const rdData=[];for(let i=0;i<=5;i++){rdData.push({cnt:D.expressions.filter(e=>e.reviewCount===i&&(i===5?e.mastered:!e.mastered)).length,lbl:i===5?'Done':i===0?'New':`R${i}`,clr:i===5?'var(--gold)':'var(--accent)'});}
+  const rdMax=Math.max(...rdData.map(r=>r.cnt),1);
   h+=`<div style="background:var(--surface);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow);padding:20px;margin-bottom:20px">`;
   h+=`<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Review Stage Distribution</div>`;
-  h+=`<div style="display:flex;gap:6px;align-items:end;height:50px">`;
-  for(let i=0;i<=5;i++){
-    const cnt=D.expressions.filter(e=>e.reviewCount===i&&(i===5?e.mastered:!e.mastered)).length;
-    const ht=total?Math.max(cnt/total*100,cnt?8:2):2;
-    const lbl=i===5?'Done':i===0?'New':`R${i}`;
-    const clr=i===5?'var(--gold)':'var(--accent)';
-    h+=`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px"><div style="font-family:JetBrains Mono,monospace;font-size:10px;font-weight:600;color:var(--text3)">${cnt}</div><div style="width:100%;height:${ht}%;background:${clr};opacity:${cnt?.8:.2};border-radius:4px 4px 0 0;min-height:2px"></div><div style="font-size:10px;color:var(--text4)">${lbl}</div></div>`;
-  }
+  h+=`<div style="display:flex;gap:6px;height:120px;padding-top:20px">`;
+  rdData.forEach((r,i)=>{
+    const pct2=rdMax?Math.max(r.cnt/rdMax*100,r.cnt?8:2):2;
+    h+=`<div style="flex:1;display:flex;flex-direction:column;align-items:center"><div style="font-family:JetBrains Mono,monospace;font-size:11px;font-weight:700;color:var(--text3);margin-bottom:4px" data-anim="${r.cnt}" data-delay="${i*100+200}">0</div><div style="width:70%;flex:1;position:relative"><div class="stat-bar-anim" data-ht="${pct2}" data-delay="${i*100}" style="position:absolute;bottom:0;left:0;right:0;height:0%;background:${r.clr};opacity:${r.cnt?.85:.15};border-radius:4px 4px 0 0;min-height:2px;transition:height .6s cubic-bezier(.34,1.56,.64,1)"></div></div><div style="font-size:10px;font-weight:600;color:var(--text4);margin-top:4px">${r.lbl}</div></div>`;
+  });
   h+=`</div></div>`;
   el.innerHTML=h;
+  // Trigger animations after render (double rAF to ensure layout is computed first)
+  requestAnimationFrame(()=>{requestAnimationFrame(()=>{
+    el.querySelectorAll('[data-anim]').forEach(e=>{
+      const target=+e.dataset.anim;const delay=+(e.dataset.delay||0);const suffix=e.dataset.suffix||'';
+      setTimeout(()=>{if(suffix){const start=performance.now();const step=(now)=>{const p=Math.min((now-start)/600,1);const ease=1-Math.pow(1-p,3);e.textContent=Math.round(ease*target)+suffix;if(p<1)requestAnimationFrame(step);};requestAnimationFrame(step);}else animateNum(e,target,600);},delay);
+    });
+    el.querySelectorAll('.stat-bar-anim').forEach(e=>{
+      e.offsetHeight;// force reflow
+      const ht=e.dataset.ht;const delay=+(e.dataset.delay||0);
+      setTimeout(()=>{e.style.height=ht+'%';},delay+50);
+    });
+    el.querySelectorAll('[data-ring]').forEach(e=>{
+      setTimeout(()=>{e.setAttribute('stroke-dashoffset',e.dataset.ring);},300);
+    });
+  });});
 }
 
 // DISCOVER
@@ -659,8 +685,10 @@ function rnDD(it,det,k,i){
   h+=`</div>${added?'<span class="added-badge" style="font-size:13px">✓ Already in your list</span>':`<button class="btn btn-p" onclick="addFD('${k}',${i})">+ Add to My List</button>`}</div>`;
   area.innerHTML=h;
 }
+function playAddSound(){try{const ac=new(window.AudioContext||window.webkitAudioContext)();const g=ac.createGain();g.connect(ac.destination);g.gain.setValueAtTime(0.25,ac.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ac.currentTime+0.3);const o=ac.createOscillator();o.type='sine';o.frequency.setValueAtTime(660,ac.currentTime);o.frequency.setValueAtTime(880,ac.currentTime+0.1);o.connect(g);o.start(ac.currentTime);o.stop(ac.currentTime+0.3);}catch(e){}}
 function addFD(k,i){const it=D.discCache[k]?.list?.[i];if(!it)return;if(D.expressions.some(e=>e.expression.toLowerCase()===it.expression.toLowerCase()))return;addE(it.expression,it.meaning_ja,k);
-  const listEl=document.getElementById('dl_'+k);if(listEl){const items=listEl.querySelectorAll('.di');if(items[i]){const btnEl=items[i].querySelector('.btn');if(btnEl){btnEl.outerHTML='<span class="added-badge">✓ Added</span>';}}}
+  playAddSound();
+  const listEl=document.getElementById('dl_'+k);if(listEl){const items=listEl.querySelectorAll('.di');if(items[i]){const btnEl=items[i].querySelector('.btn');if(btnEl){btnEl.outerHTML='<span class="added-badge">✓ Added</span>';}items[i].style.transition='border-color .3s, background .3s';items[i].style.borderColor='var(--green)';items[i].style.background='var(--greenBg)';}}
   const area=document.getElementById('ddArea');if(area&&selDi&&selDi.k===k&&selDi.i===i){const det=D.discCache[k].details[it.expression];if(det)rnDD(it,det,k,i);}
 }
 
