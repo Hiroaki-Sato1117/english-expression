@@ -280,14 +280,20 @@ function rToday(){
   const el=document.getElementById('tToday');
   const dues=D.expressions.filter(isDue).sort((a,b)=>(a.nextReviewDate||'').localeCompare(b.nextReviewDate||''));
   const noExItems=D.expressions.filter(isNoEx).sort((a,b)=>(a.learnedDate||'').localeCompare(b.learnedDate||''));
-  const mw=D.expressions.filter(e=>e.mastered&&e.reviews.length&&(new Date(td())-new Date(e.reviews[e.reviews.length-1].date))/864e5<=7).length;
-  const active=D.expressions.filter(e=>!e.mastered).length;
-  let h=`<div class="stat-bar"><div class="stat-box"><div class="sv">${dues.length}</div><div class="sl">Due Today</div></div><div class="stat-box"><div class="sv">${noExItems.length}</div><div class="sl">No Example</div></div><div class="stat-box"><div class="sv">${active}</div><div class="sl">Active</div></div><div class="stat-box"><div class="sv gold">${mw}</div><div class="sl">Mastered (5 reviews)</div></div></div>`;
+  const totalTasks=dues.length+noExItems.length;
+  // Count reviews by stage (R1~R5)
+  const rCounts={};dues.forEach(e=>{const k='R'+(e.reviewCount+1);rCounts[k]=(rCounts[k]||0)+1;});
+  let h=`<div style="margin-bottom:18px;background:var(--surface);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow);padding:16px 20px">`;
+  h+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div style="font-size:22px;font-weight:800;color:var(--text)">Today's Tasks <span style="font-family:'JetBrains Mono',monospace;color:var(--accent)">${totalTasks}</span></div></div>`;
+  h+=`<div style="display:flex;gap:8px;flex-wrap:wrap">`;
+  if(noExItems.length) h+=`<div style="display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;background:var(--orangeBg);font-size:12px;font-weight:600;color:var(--orange)">No Example <span style="font-family:'JetBrains Mono',monospace;font-weight:800">${noExItems.length}</span></div>`;
+  ['R1','R2','R3','R4','R5'].forEach(k=>{if(rCounts[k]) h+=`<div style="display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;background:${k==='R5'?'var(--goldBg)':'var(--accentLight)'};font-size:12px;font-weight:600;color:${k==='R5'?'var(--gold)':'var(--accent)'}">${k} <span style="font-family:'JetBrains Mono',monospace;font-weight:800">${rCounts[k]}</span></div>`;});
+  if(!totalTasks) h+=`<div style="font-size:12px;color:var(--text4)">No tasks for today</div>`;
+  h+=`</div></div>`;
   if(!dues.length&&!noExItems.length){
     h+=D.expressions.length?`<div class="empty"><div class="empty-icon" style="font-size:24px;opacity:.5">◆</div><div class="empty-text">All done for today!</div></div>`:`<div class="empty"><div class="empty-icon" style="font-size:24px;opacity:.5">◆</div><div class="empty-text">No expressions yet</div><button class="btn btn-p" onclick="ct='all';rNav();rT();">Go to All →</button></div>`;
   } else {
     if(dues.length){
-    h+=`<div style="margin-bottom:14px;padding:10px 16px;background:var(--accentLight);border-radius:10px;border:1px solid var(--border2);display:flex;align-items:center;gap:8px"><span style="font-size:13px;font-weight:600;color:var(--accent)">${dues.length} review${dues.length>1?'s':''} remaining</span><div style="flex:1;height:6px;background:var(--bg2);border-radius:3px;overflow:hidden"><div style="height:100%;background:var(--accent);border-radius:3px;width:${Math.round((1-dues.length/Math.max(dues.length+mw,1))*100)}%;transition:width .3s"></div></div></div>`;
     dues.forEach(e=>{
       const od=isOD(e);const exs=allEx(e);
       h+=`<div class="card"><div class="c-expr">"${esc(e.expression)}"</div><div class="c-mean">${esc(e.meaning)}</div><div class="c-meta"><span class="badge ${od?'overdue':'due'}">${od?'Overdue':'Due Today'}</span><span>Review #${e.reviewCount+1} of 5</span></div>`;
