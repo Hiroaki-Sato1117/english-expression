@@ -619,7 +619,7 @@ function rStats(){
   });
   h+=`</div></div></div>`;
   // Review distribution (bar chart)
-  const rdData=[];for(let i=0;i<=5;i++){rdData.push({cnt:D.expressions.filter(e=>e.reviewCount===i&&(i===5?e.mastered:!e.mastered)).length,lbl:i===5?'Done':i===0?'New':`R${i}`,clr:i===5?'var(--gold)':'var(--accent)'});}
+  const rdData=[];for(let i=0;i<=5;i++){rdData.push({cnt:D.expressions.filter(e=>e.reviewCount===i&&(i===5?e.mastered:!e.mastered)).length,lbl:i===5?'Mastered':i===0?'New':`R${i}`,clr:i===5?'var(--gold)':'var(--accent)'});}
   const rdMax=Math.max(...rdData.map(r=>r.cnt),1);
   h+=`<div style="background:var(--surface);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow);padding:20px;margin-bottom:20px">`;
   h+=`<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Review Stage Distribution</div>`;
