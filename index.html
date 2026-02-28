@@ -407,7 +407,7 @@ const spkSvg='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke
 // ALL
 function rAll(){
   const el=document.getElementById('tAll');
-  let h=`<div class="fb"><select id="ff" onchange="rAllList()"><option value="all">All</option><option value="active">Active</option><option value="noex">No Example</option><option value="due">Due Today</option><option value="mastered">Mastered</option></select><input id="fs" placeholder="Search..." oninput="rAllList()"><button class="btn btn-p btn-sm" onclick="oMo()">+ Add New</button></div>`;
+  let h=`<div class="fb"><select id="ff" onchange="rAllList()"><option value="all">All</option><option value="active">Active</option><option value="noex">No Example</option><option value="due">Due Today</option><option value="mastered">Mastered</option></select><input id="fs" placeholder="Search..." oninput="rAllList()"><span id="aCount" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text4);white-space:nowrap"></span><button class="btn btn-p btn-sm" onclick="oMo()">+ Add New</button></div>`;
   h+=`<div class="al-wrap"><div class="al-top" id="aR"></div><div class="al-bot"><div class="al-bot-l" id="aL"></div><div class="al-bot-r" id="aEM"></div></div></div>`;
   el.innerHTML=h;rAllList();rAllDet();
 }
@@ -419,20 +419,20 @@ function rAllList(){
     if(f==='active'&&e.mastered)return false;if(f==='due'&&!isDue(e))return false;if(f==='mastered'&&!e.mastered)return false;if(f==='noex'&&!isNoEx(e))return false;
     if(s&&!e.expression.toLowerCase().includes(s)&&!e.meaning.toLowerCase().includes(s))return false;return true;
   }).sort((a,b)=>{if(a.mastered!==b.mastered)return a.mastered?1:-1;const aN=isNoEx(a),bN=isNoEx(b);if(aN!==bN)return aN?-1:1;const ad=isDue(a),bd=isDue(b);if(ad!==bd)return ad?-1:1;return(a.nextReviewDate||'9').localeCompare(b.nextReviewDate||'9');});
+  // Update count display
+  const cntEl=document.getElementById('aCount');if(cntEl)cntEl.textContent=items.length+' of '+D.expressions.length;
   if(!items.length){el.innerHTML=`<div class="empty"><div class="empty-icon" style="font-size:24px;opacity:.5">◆</div><div class="empty-text">No expressions found</div><button class="btn btn-p" onclick="oMo()">+ Add</button></div>`;return;}
   let h='';items.forEach(e=>{
     const due=isDue(e),od=isOD(e),noEx=isNoEx(e),dl=daysLeft(e);
     h+=`<div class="li${selId===e.id?' sel':''}${e.mastered?' mst':''}${due?' due-hl':''}${noEx?' noex-hl':''}" onclick="selId='${e.id}';rAllList();rAllDet();">`;
     h+=`<div class="li-top"><span class="li-expr">"${esc(e.expression)}"</span>${rProg(e)}</div><div class="li-mean">${esc(e.meaning)}</div>`;
-    let status='';
-    if(e.mastered)status='Mastered';
-    else if(noEx)status='No example yet';
-    else if(od)status='Overdue';
-    else if(due)status='Due today';
-    else if(dl!==null&&dl>0)status=`${dl}d until review`;
-    else if(dl===0)status='Due today';
-    else status='Next: '+fmt(e.nextReviewDate);
-    h+=`<div class="li-bot"><span class="li-next">${status}</span></div></div>`;
+    let badge='',statusTxt='';
+    if(e.mastered){badge='<span class="badge mastered">Mastered</span>';}
+    else if(noEx){badge='<span class="badge noex">No Example</span>';}
+    else if(od){badge='<span class="badge due">Overdue</span>';statusTxt='R'+(e.reviewCount+1);}
+    else if(due){badge='<span class="badge due">Due Today</span>';statusTxt='R'+(e.reviewCount+1);}
+    else{statusTxt='R'+(e.reviewCount);if(dl!==null&&dl>0)statusTxt+=' · '+dl+'d left';else if(e.nextReviewDate)statusTxt+=' · '+fmt(e.nextReviewDate);}
+    h+=`<div class="li-bot">${badge}<span class="li-next">${statusTxt}</span></div></div>`;
   });el.innerHTML=h;
 }
 
