@@ -584,7 +584,7 @@ function rStats(){
   const maxC=Math.max(...days.map(d=>d.c),1);
   // Mastery timeline (cumulative mastered by date)
   const mDates=[];D.expressions.filter(e=>e.mastered&&e.reviews.length).forEach(e=>{const last=e.reviews[e.reviews.length-1];if(last)mDates.push(last.date);});mDates.sort();
-  const statNums=[{v:total,cls:'sv',lbl:'Total'},{v:mastered,cls:'sv gold',lbl:'Mastered'},{v:active,cls:'sv',lbl:'Active'},{v:noex,cls:'sv',lbl:'No Example'},{v:streak,cls:'sv',lbl:'Day Streak'},{v:totalReviews,cls:'sv',lbl:'Reviews'}];
+  const statNums=[{v:total,cls:'sv',lbl:'Total'},{v:mastered,cls:'sv gold',lbl:'Mastered'},{v:active,cls:'sv',lbl:'Active'},{v:noex,cls:'sv',lbl:'No Example'},{v:totalReviews,cls:'sv',lbl:'Reviews'}];
   let h=`<div class="stat-bar" style="margin-bottom:20px">`;
   statNums.forEach((s,i)=>{h+=`<div class="stat-box"><div class="${s.cls}" data-anim="${s.v}" data-delay="${i*80}">0</div><div class="sl">${s.lbl}</div></div>`;});
   h+=`</div>`;
