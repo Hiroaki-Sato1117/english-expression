@@ -296,9 +296,9 @@ function rToday(){
     if(dues.length){
     dues.forEach(e=>{
       const od=isOD(e);const exs=allEx(e);
-      h+=`<div class="card"><div class="c-expr">"${esc(e.expression)}"</div><div class="c-mean">${esc(e.meaning)}</div><div class="c-meta"><span class="badge ${od?'overdue':'due'}">${od?'Overdue':'Due Today'}</span><span>Review #${e.reviewCount+1} of 5</span></div>`;
+      h+=`<div class="card"><div class="c-expr">"${esc(e.expression)}" <button class="spk" onclick="speak('${esc(e.expression).replace(/'/g,"\\'")}')">${spkSvg}</button></div><div class="c-mean">${esc(e.meaning)}</div><div class="c-meta"><span class="badge ${od?'overdue':'due'}">${od?'Overdue':'Due Today'}</span><span>Review #${e.reviewCount+1} of 5</span></div>`;
       h+=rProg(e);
-      if(exs.length){h+=`<div class="past-ex"><div class="pe-title">Past Examples</div>`;exs.forEach((r,i)=>{h+=`<div class="pe-item"><span class="en">${i+1}.</span>${esc(r.text)}<span class="ed">${fmt(r.date)}</span></div>`;});h+=`</div>`;}
+      if(exs.length){h+=`<div class="past-ex"><div class="pe-title">Past Examples</div>`;exs.forEach((r,i)=>{h+=`<div class="pe-item"><span class="en">${i+1}.</span>${esc(r.text)}<button class="spk" onclick="speak(\`${esc(r.text).replace(/`/g,'')}\`)">${spkSvg}</button><span class="ed">${fmt(r.date)}</span></div>`;});h+=`</div>`;}
       h+=`<div style="margin:10px 0"><div class="dp-st">AI Suggestions</div><div id="tsug_${e.id}"></div><button class="btn btn-s btn-sm" onclick="genSugT('${e.id}')" id="tsugBtn_${e.id}">Generate Examples ▶</button></div>`;
       h+=`<div class="ir"><textarea id="trev_${e.id}" placeholder="Write or paste an example sentence to complete review..." rows="1"></textarea><button class="btn btn-p" onclick="doRev('${e.id}','trev_${e.id}')">Save & Review ✓</button></div></div>`;
     });
@@ -306,11 +306,23 @@ function rToday(){
     if(noExItems.length){
     h+=`<div style="margin:18px 0 10px;font-size:13px;font-weight:700;color:var(--orange);display:flex;align-items:center;gap:6px"><span style="font-size:16px">⚡</span> No Example Yet (${noExItems.length})</div>`;
     noExItems.forEach(e=>{
-      h+=`<div class="card" style="border-left:3px solid var(--orange)"><div class="c-expr">"${esc(e.expression)}"</div><div class="c-mean">${esc(e.meaning)}</div><div class="c-meta"><span class="badge noex">No Example</span><span>Added ${fmt(e.learnedDate)}</span></div>`;
+      h+=`<div class="card" style="border-left:3px solid var(--orange)"><div class="c-expr">"${esc(e.expression)}" <button class="spk" onclick="speak('${esc(e.expression).replace(/'/g,"\\'")}')">${spkSvg}</button></div><div class="c-mean">${esc(e.meaning)}</div><div class="c-meta"><span class="badge noex">No Example</span><span>Added ${fmt(e.learnedDate)}</span></div>`;
       h+=`<div style="margin:10px 0"><div class="dp-st">AI Suggestions</div><div id="tsug_${e.id}"></div><button class="btn btn-s btn-sm" onclick="genSugT('${e.id}')" id="tsugBtn_${e.id}">Generate Examples ▶</button></div>`;
       h+=`<div class="ir"><textarea id="trev_${e.id}" placeholder="Write an example sentence to activate this expression..." rows="1"></textarea><button class="btn btn-p" onclick="doRev('${e.id}','trev_${e.id}')">Save & Activate ✓</button></div></div>`;
     });
     }
+  }
+  // Today's completed tasks
+  const doneToday=D.expressions.filter(e=>(e.reviews||[]).some(r=>r.date===td())&&!isDue(e)&&!isNoEx(e));
+  if(doneToday.length){
+    h+=`<div style="margin:24px 0 10px;font-size:13px;font-weight:700;color:var(--green);display:flex;align-items:center;gap:6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Completed Today (${doneToday.length})</div>`;
+    doneToday.forEach(e=>{
+      const lastRev=e.reviews[e.reviews.length-1];const exText=lastRev?lastRev.example:'';
+      h+=`<div class="card" style="opacity:.7;border-left:3px solid var(--green)"><div style="display:flex;align-items:center;gap:6px"><div class="c-expr" style="margin-bottom:0">"${esc(e.expression)}" <button class="spk" onclick="speak('${esc(e.expression).replace(/'/g,"\\'")}')">${spkSvg}</button></div>${e.mastered?'<span class="badge mastered" style="font-size:9px">Mastered!</span>':''}</div><div class="c-mean">${esc(e.meaning)}</div>`;
+      if(exText) h+=`<div style="margin-top:6px;padding:6px 10px;background:var(--greenBg);border-radius:7px;font-size:12px;color:var(--text2);display:flex;align-items:start;gap:6px"><span style="flex:1">${esc(exText)}</span><button class="spk" onclick="speak(\`${esc(exText).replace(/`/g,'')}\`)">${spkSvg}</button></div>`;
+      h+=rProg(e);
+      h+=`</div>`;
+    });
   }
   el.innerHTML=h;
 }
@@ -359,10 +371,11 @@ function doRev(id,inputId){
   if(ct==='today'&&card){card.classList.add('card-done');setTimeout(()=>{rToday();rNav();},650);}
   else{if(ct==='today')rToday();rNav();}
   if(ct==='all'){rAllList();rAllDet();rNav();}
-  // Check if all today's reviews are done
+  // Check if all today's tasks are done (reviews + no-example items)
   setTimeout(()=>{
-    const dues=D.expressions.filter(x=>!x.mastered&&x.reviewCount>0&&x.nextReviewDate&&x.nextReviewDate<=td());
-    if(dues.length===0&&ct==='today'){showAllDonePopup();}
+    const duesLeft=D.expressions.filter(isDue).length;
+    const noExLeft=D.expressions.filter(isNoEx).length;
+    if(duesLeft===0&&noExLeft===0&&ct==='today'&&D.expressions.length){showAllDonePopup();}
   },600);
 }
 
