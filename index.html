@@ -272,7 +272,7 @@ function rProg(e){let h='<div class="prog">';for(let i=0;i<5;i++){const c=i<e.re
 function allEx(e){const re=(e.reviews||[]).filter(r=>r.example).map(r=>({text:r.example,date:r.date}));const se=(e.examples||[]).map(x=>({text:x.text,date:x.date}));return[...re,...se];}
 
 // NAV
-function rNav(){const n=document.getElementById('nv');n.innerHTML='';const dueC=D.expressions.filter(isDue).length;TABS.forEach(t=>{const b=document.createElement('button');b.className='ntab'+(ct===t.id?' active':'');b.textContent=t.label;if(t.id==='today'&&dueC>0){const bg=document.createElement('span');bg.className='ntab-badge';bg.textContent=dueC;b.appendChild(bg);}b.onclick=()=>{ct=t.id;try{localStorage.setItem('evtab',ct);}catch(e){}rNav();rT();};n.appendChild(b);});}
+function rNav(){const n=document.getElementById('nv');n.innerHTML='';const dueC=D.expressions.filter(isDue).length;const noExC=D.expressions.filter(isNoEx).length;const todayC=dueC+noExC;TABS.forEach(t=>{const b=document.createElement('button');b.className='ntab'+(ct===t.id?' active':'');b.textContent=t.label;if(t.id==='today'&&todayC>0){const bg=document.createElement('span');bg.className='ntab-badge';bg.textContent=todayC;b.appendChild(bg);}b.onclick=()=>{ct=t.id;try{localStorage.setItem('evtab',ct);}catch(e){}rNav();rT();};n.appendChild(b);});}
 function rT(){document.querySelectorAll('.tc').forEach(e=>e.classList.remove('active'));document.getElementById('t'+ct.charAt(0).toUpperCase()+ct.slice(1)).classList.add('active');TABS.find(t=>t.id===ct).r();}
 
 // TODAY
@@ -579,7 +579,8 @@ function addE(expr,mean,src){
   if(!ex||!mn)return;
   const e={id:'e_'+Date.now(),expression:ex,meaning:mn,learnedDate:td(),reviewCount:0,nextReviewDate:null,mastered:false,reviews:[],examples:[],source:src||'manual',activated:false};
   D.expressions.push(e);save();cMo();selId=e.id;
-  if(ct==='all'){rAllList();rAllDet();}
+  rNav();
+  if(ct==='all'){rAllList();rAllDet();}else if(ct==='today'){rToday();}
   return e.id;
 }
 function delE(id){if(!confirm('Delete this expression?'))return;D.expressions=D.expressions.filter(e=>e.id!==id);if(selId===id)selId=null;save();rNav();if(ct==='all'){rAllList();rAllDet();}else rToday();}
