@@ -73,7 +73,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 
 .past-ex{margin:10px 0;padding:8px 12px;background:var(--accentLight2);border-radius:8px;border-left:3px solid var(--accent);}
 .pe-title{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
-.pe-item{font-size:12px;color:var(--text2);padding:3px 0;display:flex;gap:8px;}
+.pe-item{font-size:14px;color:var(--text2);padding:4px 0;display:flex;gap:8px;line-height:1.5;}
 .pe-item .en{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text4);min-width:16px;}
 .pe-item .ed{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text4);margin-left:auto;flex-shrink:0;}
 
@@ -173,11 +173,11 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .em{background:var(--surface);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow);padding:18px;}
 .em h4{font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
 .em-saved{display:flex;align-items:start;gap:6px;padding:6px 10px;background:var(--accentLight2);border-radius:7px;border-left:3px solid var(--accent);margin-bottom:6px;}
-.em-saved .et{flex:1;font-size:12px;color:var(--text2);line-height:1.4;}
+.em-saved .et{flex:1;font-size:14px;color:var(--text2);line-height:1.5;}
 .em-saved .emeta{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text4);flex-shrink:0;}
 .em-num{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text4);font-weight:600;min-width:18px;padding-top:2px;}
 .em-suggestions{margin:10px 0;}
-.em-sug-item{padding:8px 10px;border:1px solid var(--border);border-radius:7px;margin-bottom:5px;font-size:12px;color:var(--text2);cursor:pointer;transition:all .12s;display:flex;align-items:center;gap:8px;}
+.em-sug-item{padding:10px 12px;border:1px solid var(--border);border-radius:7px;margin-bottom:5px;font-size:14px;color:var(--text2);cursor:pointer;transition:all .12s;display:flex;align-items:center;gap:8px;line-height:1.5;}
 .em-sug-item:hover{background:var(--accentLight2);border-color:var(--accent);}
 .em-sug-item .copy-icon{font-size:14px;flex-shrink:0;opacity:.4;transition:opacity .12s;}
 .em-sug-item:hover .copy-icon{opacity:1;}
@@ -323,7 +323,7 @@ function rToday(){
     doneToday.forEach(e=>{
       const lastRev=e.reviews[e.reviews.length-1];const exText=lastRev?lastRev.example:'';
       h+=`<div class="card" style="opacity:.7;border-left:3px solid var(--green)"><div style="display:flex;align-items:center;gap:6px"><div class="c-expr" style="margin-bottom:0">"${esc(e.expression)}" <button class="spk" onclick="speak('${esc(e.expression).replace(/'/g,"\\'")}')">${spkSvg}</button></div>${e.mastered?'<span class="badge mastered" style="font-size:9px">Mastered!</span>':''}</div><div class="c-mean">${esc(e.meaning)}</div>`;
-      if(exText) h+=`<div style="margin-top:6px;padding:6px 10px;background:var(--greenBg);border-radius:7px;font-size:12px;color:var(--text2);display:flex;align-items:start;gap:6px"><span style="flex:1">${esc(exText)}</span><button class="spk" onclick="speak(\`${esc(exText).replace(/`/g,'')}\`)">${spkSvg}</button></div>`;
+      if(exText) h+=`<div style="margin-top:6px;padding:8px 12px;background:var(--greenBg);border-radius:7px;font-size:14px;line-height:1.5;color:var(--text2);display:flex;align-items:start;gap:6px"><span style="flex:1">${esc(exText)}</span><button class="spk" onclick="speak(\`${esc(exText).replace(/`/g,'')}\`)">${spkSvg}</button></div>`;
       h+=rProg(e);
       h+=`</div>`;
     });
