@@ -299,7 +299,9 @@ function rToday(){
       h+=`<div class="card"><div class="c-expr">"${esc(e.expression)}" <button class="spk" onclick="speak('${esc(e.expression).replace(/'/g,"\\'")}')">${spkSvg}</button></div><div class="c-mean">${esc(e.meaning)}</div><div class="c-meta"><span class="badge ${od?'overdue':'due'}">${od?'Overdue':'Due Today'}</span><span>Review #${e.reviewCount+1} of 5</span></div>`;
       h+=rProg(e);
       if(exs.length){h+=`<div class="past-ex"><div class="pe-title">Past Examples</div>`;exs.forEach((r,i)=>{h+=`<div class="pe-item"><span class="en">${i+1}.</span>${esc(r.text)}<button class="spk" onclick="speak(\`${esc(r.text).replace(/`/g,'')}\`)">${spkSvg}</button><span class="ed">${fmt(r.date)}</span></div>`;});h+=`</div>`;}
-      h+=`<div style="margin:10px 0"><div class="dp-st">AI Suggestions</div><div id="tsug_${e.id}"></div><button class="btn btn-s btn-sm" onclick="genSugT('${e.id}')" id="tsugBtn_${e.id}">Generate Examples ▶</button></div>`;
+      h+=`<div style="margin:10px 0"><div class="dp-st">AI Suggestions</div><div id="tsug_${e.id}">`;
+      const tc=sugCache[e.id];if(tc){tc.forEach(s=>{const en=typeof s==='string'?s:s.en;const ja=typeof s==='string'?'':s.ja;h+=`<div class="em-sug-item"><span class="copy-icon" onclick="copySugT(this.parentElement,'${e.id}')" title="Click to copy">+</span><span onclick="copySugT(this.parentElement,'${e.id}')" style="flex:1;cursor:pointer"><span>${esc(en)}</span>${ja?`<div style="font-size:10px;color:var(--text4);margin-top:2px">${esc(ja)}</div>`:''}</span><button class="spk" onclick="event.stopPropagation();speak(\`${esc(en).replace(/`/g,'')}\`)">${spkSvg}</button></div>`;});}
+      h+=`</div><button class="btn btn-s btn-sm" onclick="genSugT('${e.id}')" id="tsugBtn_${e.id}">Generate Examples ▶</button></div>`;
       h+=`<div class="ir"><textarea id="trev_${e.id}" placeholder="Write or paste an example sentence to complete review..." rows="1"></textarea><button class="btn btn-p" onclick="doRev('${e.id}','trev_${e.id}')">Save & Review ✓</button></div></div>`;
     });
     }
@@ -307,7 +309,9 @@ function rToday(){
     h+=`<div style="margin:18px 0 10px;font-size:13px;font-weight:700;color:var(--orange);display:flex;align-items:center;gap:6px"><span style="font-size:16px">⚡</span> No Example Yet (${noExItems.length})</div>`;
     noExItems.forEach(e=>{
       h+=`<div class="card" style="border-left:3px solid var(--orange)"><div class="c-expr">"${esc(e.expression)}" <button class="spk" onclick="speak('${esc(e.expression).replace(/'/g,"\\'")}')">${spkSvg}</button></div><div class="c-mean">${esc(e.meaning)}</div><div class="c-meta"><span class="badge noex">No Example</span><span>Added ${fmt(e.learnedDate)}</span></div>`;
-      h+=`<div style="margin:10px 0"><div class="dp-st">AI Suggestions</div><div id="tsug_${e.id}"></div><button class="btn btn-s btn-sm" onclick="genSugT('${e.id}')" id="tsugBtn_${e.id}">Generate Examples ▶</button></div>`;
+      h+=`<div style="margin:10px 0"><div class="dp-st">AI Suggestions</div><div id="tsug_${e.id}">`;
+      const tc2=sugCache[e.id];if(tc2){tc2.forEach(s=>{const en=typeof s==='string'?s:s.en;const ja=typeof s==='string'?'':s.ja;h+=`<div class="em-sug-item"><span class="copy-icon" onclick="copySugT(this.parentElement,'${e.id}')" title="Click to copy">+</span><span onclick="copySugT(this.parentElement,'${e.id}')" style="flex:1;cursor:pointer"><span>${esc(en)}</span>${ja?`<div style="font-size:10px;color:var(--text4);margin-top:2px">${esc(ja)}</div>`:''}</span><button class="spk" onclick="event.stopPropagation();speak(\`${esc(en).replace(/`/g,'')}\`)">${spkSvg}</button></div>`;});}
+      h+=`</div><button class="btn btn-s btn-sm" onclick="genSugT('${e.id}')" id="tsugBtn_${e.id}">Generate Examples ▶</button></div>`;
       h+=`<div class="ir"><textarea id="trev_${e.id}" placeholder="Write an example sentence to activate this expression..." rows="1"></textarea><button class="btn btn-p" onclick="doRev('${e.id}','trev_${e.id}')">Save & Activate ✓</button></div></div>`;
     });
     }
@@ -361,7 +365,7 @@ function doRev(id,inputId){
   const justMastered=e.reviewCount>=5;
   if(justMastered){e.mastered=true;e.nextReviewDate=null;}
   else{e.nextReviewDate=cNext(td(),e.reviewCount);}
-  save();
+  save();delete sugCache[id];
   // Effects
   const card=inp?inp.closest('.card'):null;
   const btn=inp?inp.parentElement.querySelector('.btn'):null;
@@ -504,7 +508,7 @@ async function genSugT(id){
   const btn=document.getElementById('tsugBtn_'+id);if(btn){btn.disabled=true;btn.textContent='Generating...';}
   const area=document.getElementById('tsug_'+id);
   if(area)area.innerHTML=`<div class="loading"><div class="spinner"></div>Generating...</div>`;
-  const prompt=`Generate 5 natural example sentences using the English expression "${e.expression}" (meaning: ${e.meaning}). Each sentence should show a different context or situation. For each sentence, provide a natural Japanese translation. Return ONLY a JSON array of objects: [{"en":"English sentence","ja":"日本語訳"}]`;
+  const themes=['work','travel','friendship','food','technology','health','school','family','sports','movies','music','shopping','weather','hobbies','news'];const pick=themes.sort(()=>Math.random()-.5).slice(0,3).join(', ');const prompt=`Generate 5 natural example sentences using the English expression "${e.expression}" (meaning: ${e.meaning}). Use varied and creative contexts — try themes like ${pick}. Each sentence should be unique and different from typical examples. For each sentence, provide a natural Japanese translation. Return ONLY a JSON array of objects: [{"en":"English sentence","ja":"日本語訳"}]. Seed: ${Date.now()}`;
   try{
     const data=await callGem(prompt);const parsed=JSON.parse(data);sugCache[id]=parsed;
     if(area){let h='';parsed.forEach(s=>{const en=typeof s==='string'?s:s.en;const ja=typeof s==='string'?'':s.ja;h+=`<div class="em-sug-item"><span class="copy-icon" onclick="copySugT(this.parentElement,'${id}')" title="Click to copy">+</span><span onclick="copySugT(this.parentElement,'${id}')" style="flex:1;cursor:pointer"><span>${esc(en)}</span>${ja?`<div style="font-size:10px;color:var(--text4);margin-top:2px">${esc(ja)}</div>`:''}</span><button class="spk" onclick="event.stopPropagation();speak(\`${esc(en).replace(/`/g,'')}\`)">${spkSvg}</button></div>`;});area.innerHTML=h;}
@@ -518,7 +522,7 @@ async function genSug(id){
   const btn=document.getElementById('sugBtn_'+id);if(btn){btn.disabled=true;btn.textContent='Generating...';}
   const area=document.getElementById('sugArea_'+id);
   if(area)area.innerHTML=`<div class="loading"><div class="spinner"></div>Generating...</div>`;
-  const prompt=`Generate 5 natural example sentences using the English expression "${e.expression}" (meaning: ${e.meaning}). Each sentence should show a different context or situation. For each sentence, provide a natural Japanese translation. Return ONLY a JSON array of objects: [{"en":"English sentence","ja":"日本語訳"}]`;
+  const themes=['work','travel','friendship','food','technology','health','school','family','sports','movies','music','shopping','weather','hobbies','news'];const pick=themes.sort(()=>Math.random()-.5).slice(0,3).join(', ');const prompt=`Generate 5 natural example sentences using the English expression "${e.expression}" (meaning: ${e.meaning}). Use varied and creative contexts — try themes like ${pick}. Each sentence should be unique and different from typical examples. For each sentence, provide a natural Japanese translation. Return ONLY a JSON array of objects: [{"en":"English sentence","ja":"日本語訳"}]. Seed: ${Date.now()}`;
   try{
     const data=await callGem(prompt);
     const parsed=JSON.parse(data);
@@ -553,7 +557,7 @@ function saveEx(id){
     if(!e.examples)e.examples=[];
     e.examples.push({date:td(),text:txt});
   }
-  save();
+  save();delete sugCache[id];
   // Effects for activation and review
   const btn=document.querySelector('.em-actions .btn-p');
   if(noEx){playRevSound();fireConfetti(btn);}
