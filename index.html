@@ -224,6 +224,11 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .dd-m{font-size:14px;color:var(--text);margin-bottom:12px;line-height:1.5;}
 .dd-s{margin-bottom:12px;}.dd-s h5{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
 .dd-ex{font-size:13px;color:var(--text2);padding:4px 0 4px 12px;border-left:2px solid var(--accent);margin-bottom:6px;}
+.quiz-opt{padding:12px 16px;border:1px solid var(--border2);border-radius:10px;cursor:pointer;transition:all .15s;font-size:14px;line-height:1.5;}
+.quiz-opt:hover:not(.wrong):not(.correct):not([disabled]){border-color:var(--accent);background:var(--accentLight2);}
+.quiz-opt.correct{border-color:var(--green);background:var(--greenBg);cursor:default;}
+.quiz-opt.wrong{border-color:var(--red);background:var(--redBg);opacity:.6;cursor:default;}
+.quiz-opt[disabled]{pointer-events:none;}
 </style>
 </head>
 <body>
@@ -256,7 +261,7 @@ const DISC_CATS=[
 ];
 const TABS=[{id:'all',label:'All',r:rAll},{id:'today',label:'Today',r:rToday},{id:'stats',label:'Stats',r:rStats},{id:'discover',label:'Discover',r:rDisc}];
 let D={expressions:[],discCache:{friends:{list:[],details:{}},suits:{list:[],details:{}}},excl:{friends:[],suits:[]}};
-let ct=(()=>{try{const t=localStorage.getItem('evtab');return t&&['all','today','stats','discover'].includes(t)?t:'all';}catch(e){return'all';}})(),selId=null,selDi=null,sugCache={};
+let ct=(()=>{try{const t=localStorage.getItem('evtab');return t&&['all','today','stats','discover'].includes(t)?t:'all';}catch(e){return'all';}})(),selId=null,selDi=null,sugCache={},quizCache={};
 
 const td=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
 const fmt=d=>d?((p=d.split('-'))&&`${+p[1]}/${+p[2]}`):'—';
@@ -270,6 +275,7 @@ function save(){try{localStorage.setItem('ev2',JSON.stringify(D));}catch(e){}}
 function load(){try{const s=localStorage.getItem('ev2');if(s){D=JSON.parse(s);if(!D.expressions)D.expressions=[];if(!D.discCache)D.discCache={};Object.keys(DISC_TOPICS).forEach(k=>{if(!D.discCache[k])D.discCache[k]={list:[],details:{}};});if(!D.excl)D.excl={};Object.keys(DISC_TOPICS).forEach(k=>{if(!D.excl[k])D.excl[k]=[];});}}catch(e){}}
 function rProg(e){let h='<div class="prog">';for(let i=0;i<5;i++){const c=i<e.reviewCount?(e.mastered?'seg g':'seg f'):'seg';h+=`<div class="${c}"></div>`;}h+=`<span class="prog-l">${e.reviewCount}/5</span></div>`;return h;}
 function allEx(e){const re=(e.reviews||[]).filter(r=>r.example).map(r=>({text:r.example,date:r.date}));const se=(e.examples||[]).map(x=>({text:x.text,date:x.date}));return[...re,...se];}
+function isQuizReview(e){return [0,2,4].includes(e.reviewCount);}
 
 // NAV
 function rNav(){const n=document.getElementById('nv');n.innerHTML='';const dueC=D.expressions.filter(isDue).length;const noExC=D.expressions.filter(isNoEx).length;const todayC=dueC+noExC;TABS.forEach(t=>{const b=document.createElement('button');b.className='ntab'+(ct===t.id?' active':'');b.textContent=t.label;if(t.id==='today'&&todayC>0){const bg=document.createElement('span');bg.className='ntab-badge';bg.textContent=todayC;b.appendChild(bg);}b.onclick=()=>{ct=t.id;try{localStorage.setItem('evtab',ct);}catch(e){}rNav();rT();};n.appendChild(b);});}
@@ -304,14 +310,20 @@ function rToday(){
   } else {
     if(dues.length){
     dues.forEach(e=>{
-      const od=isOD(e);const exs=allEx(e);
-      h+=`<div class="card"><div class="c-expr">"${esc(e.expression)}" <button class="spk" onclick="speak('${esc(e.expression).replace(/'/g,"\\'")}')">${spkSvg}</button></div><div class="c-mean">${esc(e.meaning)}</div><div class="c-meta"><span class="badge ${od?'overdue':'due'}">${od?'Overdue':'Due Today'}</span><span>Review #${e.reviewCount+1} of 5</span></div>`;
+      const od=isOD(e);const exs=allEx(e);const quiz=isQuizReview(e);
+      h+=`<div class="card"><div class="c-expr">"${esc(e.expression)}" <button class="spk" onclick="speak('${esc(e.expression).replace(/'/g,"\\'")}')">${spkSvg}</button></div><div class="c-mean">${esc(e.meaning)}</div><div class="c-meta"><span class="badge ${od?'overdue':'due'}">${od?'Overdue':'Due Today'}</span><span>Review #${e.reviewCount+1} of 5${quiz?' · Quiz':''}</span></div>`;
       h+=rProg(e);
       if(exs.length){h+=`<div class="past-ex"><div class="pe-title">Past Examples</div>`;exs.forEach((r,i)=>{h+=`<div class="pe-item"><span class="en">${i+1}.</span>${esc(r.text)}<button class="spk" onclick="speak(\`${esc(r.text).replace(/`/g,'')}\`)">${spkSvg}</button><span class="ed">${fmt(r.date)}</span></div>`;});h+=`</div>`;}
-      h+=`<div style="margin:10px 0"><div class="dp-st">AI Suggestions</div><div id="tsug_${e.id}">`;
-      const tc=sugCache[e.id];if(tc){tc.forEach(s=>{const en=typeof s==='string'?s:s.en;const ja=typeof s==='string'?'':s.ja;h+=`<div class="em-sug-item"><span class="copy-icon" onclick="copySugT(this.parentElement,'${e.id}')" title="Click to copy">+</span><span onclick="copySugT(this.parentElement,'${e.id}')" style="flex:1;cursor:pointer"><span>${esc(en)}</span>${ja?`<div style="font-size:10px;color:var(--text4);margin-top:2px">${esc(ja)}</div>`:''}</span><button class="spk" onclick="event.stopPropagation();speak(\`${esc(en).replace(/`/g,'')}\`)">${spkSvg}</button></div>`;});}
-      h+=`</div><button class="btn btn-s btn-sm" onclick="genSugT('${e.id}')" id="tsugBtn_${e.id}">Generate Examples ▶</button></div>`;
-      h+=`<div class="ir"><textarea id="trev_${e.id}" placeholder="Write or paste an example sentence to complete review..." rows="1"></textarea><button class="btn btn-p" onclick="doRev('${e.id}','trev_${e.id}')">Save & Review ✓</button></div></div>`;
+      if(quiz){
+        h+=`<div style="margin:10px 0"><div class="dp-st">Situation Quiz</div><div id="tquiz_${e.id}">`;
+        const qc=quizCache[e.id];if(qc){h+=`<div style="margin-bottom:12px;padding:12px 16px;background:var(--accentLight2);border-radius:10px;border-left:3px solid var(--accent)"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Person B's Response</div><div style="font-size:14px;color:var(--text);line-height:1.5">${esc(qc.response)}</div></div>`;h+=`<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">What did Person A say?</div>`;h+=renderQuizOpts(e.id,qc,'t');}
+        h+=`</div><button class="btn btn-s btn-sm" onclick="genQuizT('${e.id}')" id="tquizBtn_${e.id}">Generate Quiz ▶</button></div></div>`;
+      } else {
+        h+=`<div style="margin:10px 0"><div class="dp-st">AI Suggestions</div><div id="tsug_${e.id}">`;
+        const tc=sugCache[e.id];if(tc){tc.forEach(s=>{const en=typeof s==='string'?s:s.en;const ja=typeof s==='string'?'':s.ja;h+=`<div class="em-sug-item"><span class="copy-icon" onclick="copySugT(this.parentElement,'${e.id}')" title="Click to copy">+</span><span onclick="copySugT(this.parentElement,'${e.id}')" style="flex:1;cursor:pointer"><span>${esc(en)}</span>${ja?`<div style="font-size:10px;color:var(--text4);margin-top:2px">${esc(ja)}</div>`:''}</span><button class="spk" onclick="event.stopPropagation();speak(\`${esc(en).replace(/`/g,'')}\`)">${spkSvg}</button></div>`;});}
+        h+=`</div><button class="btn btn-s btn-sm" onclick="genSugT('${e.id}')" id="tsugBtn_${e.id}">Generate Examples ▶</button></div>`;
+        h+=`<div class="ir"><textarea id="trev_${e.id}" placeholder="Write or paste an example sentence to complete review..." rows="1"></textarea><button class="btn btn-p" onclick="doRev('${e.id}','trev_${e.id}')">Save & Review ✓</button></div></div>`;
+      }
     });
     }
     if(noExItems.length){
@@ -362,6 +374,86 @@ function showAllDonePopup(){
   ov.innerHTML=`<div class="cpop"><div class="cpop-icon">&#10024;</div><div class="cpop-title">All Reviews Complete!</div><div class="cpop-sub">You've finished all of today's review tasks. Great work!</div><button class="btn btn-p" onclick="this.closest('.cpop-overlay').remove()">Done</button></div>`;
   document.body.appendChild(ov);
   playAllDoneSound();fireConfetti();
+}
+
+// Quiz functions
+function renderQuizOpts(id,quiz,prefix){
+  let opts=[{text:quiz.correct,correct:true},...quiz.wrong.map(w=>({text:w,correct:false}))];
+  // Shuffle
+  for(let i=opts.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[opts[i],opts[j]]=[opts[j],opts[i]];}
+  const ci=opts.findIndex(o=>o.correct);
+  let h='';opts.forEach((o,idx)=>{h+=`<div class="quiz-opt" style="margin-bottom:8px" onclick="ansQuiz('${id}',${idx},${ci},'${prefix}')">${esc(o.text)}</div>`;});
+  return h;
+}
+async function genQuizT(id){
+  const e=D.expressions.find(x=>x.id===id);if(!e)return;
+  const btn=document.getElementById('tquizBtn_'+id);if(btn){btn.disabled=true;btn.textContent='Generating...';}
+  const area=document.getElementById('tquiz_'+id);
+  if(area)area.innerHTML=`<div class="loading"><div class="spinner"></div>Generating quiz...</div>`;
+  const prompt=`For the expression "${e.expression}" (meaning: ${e.meaning}), create a situational quiz. Generate a short, natural conversation where Person B responds using this expression. Then provide 4 options for what Person A said. Only 1 should be correct. Return JSON: {"response":"Person B's reply using the expression","correct":"What Person A said (correct)","wrong":["wrong1","wrong2","wrong3"]} Seed: ${Date.now()}`;
+  try{
+    const data=await callGem(prompt);const parsed=JSON.parse(data);quizCache[id]=parsed;
+    if(area){let h=`<div style="margin-bottom:12px;padding:12px 16px;background:var(--accentLight2);border-radius:10px;border-left:3px solid var(--accent)"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Person B's Response</div><div style="font-size:14px;color:var(--text);line-height:1.5">${esc(parsed.response)}</div></div>`;
+    h+=`<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">What did Person A say?</div>`;
+    h+=renderQuizOpts(id,parsed,'t');
+    area.innerHTML=h;}
+    playGenSound();
+  }catch(err){if(area)area.innerHTML=`<div style="font-size:12px;color:var(--red);padding:8px">Error: ${err.message}</div>`;}
+  if(btn){btn.disabled=false;btn.textContent='Generate Quiz ▶';}
+}
+async function genQuiz(id){
+  const e=D.expressions.find(x=>x.id===id);if(!e)return;
+  const btn=document.getElementById('quizBtn_'+id);if(btn){btn.disabled=true;btn.textContent='Generating...';}
+  const area=document.getElementById('quizArea_'+id);
+  if(area)area.innerHTML=`<div class="loading"><div class="spinner"></div>Generating quiz...</div>`;
+  const prompt=`For the expression "${e.expression}" (meaning: ${e.meaning}), create a situational quiz. Generate a short, natural conversation where Person B responds using this expression. Then provide 4 options for what Person A said. Only 1 should be correct. Return JSON: {"response":"Person B's reply using the expression","correct":"What Person A said (correct)","wrong":["wrong1","wrong2","wrong3"]} Seed: ${Date.now()}`;
+  try{
+    const data=await callGem(prompt);const parsed=JSON.parse(data);quizCache[id]=parsed;
+    if(area){let h=`<div style="margin-bottom:12px;padding:12px 16px;background:var(--accentLight2);border-radius:10px;border-left:3px solid var(--accent)"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Person B's Response</div><div style="font-size:14px;color:var(--text);line-height:1.5">${esc(parsed.response)}</div></div>`;
+    h+=`<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">What did Person A say?</div>`;
+    h+=renderQuizOpts(id,parsed,'a');
+    area.innerHTML=h;}
+    playGenSound();
+  }catch(err){if(area)area.innerHTML=`<div style="font-size:12px;color:var(--red);padding:8px">Error: ${err.message}</div>`;}
+  if(btn){btn.disabled=false;btn.textContent='Generate Quiz ▶';}
+}
+function ansQuiz(id,idx,correctIdx,prefix){
+  const area=document.getElementById((prefix==='t'?'tquiz_':'quizArea_')+id);
+  if(!area)return;
+  const opts=area.querySelectorAll('.quiz-opt');
+  if(idx===correctIdx){
+    // Correct
+    opts.forEach((o,i)=>{if(i===idx)o.classList.add('correct');o.setAttribute('disabled','true');o.onclick=null;});
+    setTimeout(()=>doRevQuiz(id,prefix),500);
+  } else {
+    // Wrong - disable this choice, show it as wrong
+    opts[idx].classList.add('wrong');
+    opts[idx].setAttribute('disabled','true');
+    opts[idx].onclick=null;
+  }
+}
+function doRevQuiz(id,prefix){
+  const e=D.expressions.find(x=>x.id===id);if(!e)return;
+  e.reviews.push({date:td(),example:'[Quiz: correct]'});
+  e.reviewCount++;
+  const justMastered=e.reviewCount>=5;
+  if(justMastered){e.mastered=true;e.nextReviewDate=null;}
+  else{e.nextReviewDate=cNext(td(),e.reviewCount);}
+  save();delete quizCache[id];
+  // Effects
+  const area=document.getElementById((prefix==='t'?'tquiz_':'quizArea_')+id);
+  const btn=area?area.querySelector('.quiz-opt.correct'):null;
+  if(justMastered){playMasterSound();fireConfetti(btn);}
+  else{playRevSound();fireConfetti(btn);}
+  // Slide-out animation on Today tab
+  if(ct==='today'){const card=area?area.closest('.card'):null;if(card){card.classList.add('card-done');setTimeout(()=>{rToday();rNav();},650);}else{rToday();rNav();}}
+  if(ct==='all'){rAllList();rAllDet();rNav();}
+  // Check if all today's tasks are done
+  setTimeout(()=>{
+    const duesLeft=D.expressions.filter(isDue).length;
+    const noExLeft=D.expressions.filter(isNoEx).length;
+    if(duesLeft===0&&noExLeft===0&&ct==='today'&&D.expressions.length){showAllDonePopup();}
+  },600);
 }
 
 function doRev(id,inputId){
@@ -470,6 +562,7 @@ function rAllDet(){
   let h=`<div class="dp"><div class="dp-e">"${esc(e.expression)}" <button class="spk" onclick="speak('${esc(e.expression).replace(/'/g,"\\'")}')">${spkSvg}</button></div><div class="dp-m">${esc(e.meaning)}</div>${rProg(e)}`;
   // Status alert
   if(noEx){h+=`<div style="margin:8px 0;padding:8px 12px;background:rgba(245,158,11,.1);border-radius:10px;border:1px solid #d97706"><div style="font-size:11px;font-weight:600;color:#d97706;margin-bottom:1px">No example yet</div><div style="font-size:10px;color:var(--text3)">Write your first example below to start the review cycle</div></div>`;}
+  else if(due&&isQuizReview(e)){h+=`<div style="margin:8px 0;padding:8px 12px;background:var(--redBg);border-radius:10px;border:1px solid var(--red)"><div style="font-size:11px;font-weight:600;color:var(--red)">Due for review — complete the quiz to finish</div></div>`;}
   else if(due){h+=`<div style="margin:8px 0;padding:8px 12px;background:var(--redBg);border-radius:10px;border:1px solid var(--red)"><div style="font-size:11px;font-weight:600;color:var(--red)">Due for review — write an example below to complete</div></div>`;}
   // Horizontal Progress Bar
   h+=`<div class="dp-s"><div class="dp-st">Review Progress</div><div class="hp">`;
@@ -482,20 +575,30 @@ function rAllDet(){
   el.innerHTML=h;
 
   // Example Maker (separate panel)
-  let em=`<div class="em"><h4>Example Maker</h4>`;
+  const isReview=due&&!e.mastered;const isActivation=noEx;
+  const quizMode=isReview&&isQuizReview(e);
+  let em=`<div class="em"><h4>${quizMode?'Situation Quiz':'Example Maker'}</h4>`;
   const exs=allEx(e);
   if(exs.length){em+=`<div class="dp-st">Saved Examples</div>`;exs.forEach((r,i)=>{em+=`<div class="em-saved"><span class="em-num">${i+1}.</span><span class="et">${esc(r.text)}</span><button class="spk" onclick="speak(\`${esc(r.text).replace(/`/g,'')}\`)">${spkSvg}</button><span class="emeta">${fmt(r.date)}</span></div>`;});}
 
-  em+=`<div class="dp-st" style="margin-top:12px">AI Suggestions</div>`;
-  em+=`<div id="sugArea_${e.id}">`;
-  const cached=sugCache[e.id];
-  if(cached){cached.forEach(s=>{const en=typeof s==='string'?s:s.en;const ja=typeof s==='string'?'':s.ja;em+=`<div class="em-sug-item"><span class="copy-icon" onclick="copySug(this.parentElement,'${e.id}')" title="Click to copy">+</span><span onclick="copySug(this.parentElement,'${e.id}')" style="flex:1;cursor:pointer"><span>${esc(en)}</span>${ja?`<div style="font-size:10px;color:var(--text4);margin-top:2px">${esc(ja)}</div>`:''}</span><button class="spk" onclick="event.stopPropagation();speak(\`${esc(en).replace(/`/g,'')}\`)">${spkSvg}</button></div>`;});}
-  em+=`</div>`;
-  em+=`<button class="btn btn-s btn-sm" onclick="genSug('${e.id}')" style="margin-top:6px" id="sugBtn_${e.id}">Generate Examples</button>`;
+  if(quizMode){
+    em+=`<div class="dp-st" style="margin-top:12px">Quiz</div>`;
+    em+=`<div id="quizArea_${e.id}">`;
+    const qc=quizCache[e.id];if(qc){em+=`<div style="margin-bottom:12px;padding:12px 16px;background:var(--accentLight2);border-radius:10px;border-left:3px solid var(--accent)"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Person B's Response</div><div style="font-size:14px;color:var(--text);line-height:1.5">${esc(qc.response)}</div></div>`;em+=`<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">What did Person A say?</div>`;em+=renderQuizOpts(e.id,qc,'a');}
+    em+=`</div>`;
+    em+=`<button class="btn btn-s btn-sm" onclick="genQuiz('${e.id}')" style="margin-top:6px" id="quizBtn_${e.id}">Generate Quiz ▶</button>`;
+    em+=`<div class="em-actions"><span class="em-note">Complete the quiz to finish review #${e.reviewCount+1}</span></div>`;
+  } else {
+    em+=`<div class="dp-st" style="margin-top:12px">AI Suggestions</div>`;
+    em+=`<div id="sugArea_${e.id}">`;
+    const cached=sugCache[e.id];
+    if(cached){cached.forEach(s=>{const en=typeof s==='string'?s:s.en;const ja=typeof s==='string'?'':s.ja;em+=`<div class="em-sug-item"><span class="copy-icon" onclick="copySug(this.parentElement,'${e.id}')" title="Click to copy">+</span><span onclick="copySug(this.parentElement,'${e.id}')" style="flex:1;cursor:pointer"><span>${esc(en)}</span>${ja?`<div style="font-size:10px;color:var(--text4);margin-top:2px">${esc(ja)}</div>`:''}</span><button class="spk" onclick="event.stopPropagation();speak(\`${esc(en).replace(/`/g,'')}\`)">${spkSvg}</button></div>`;});}
+    em+=`</div>`;
+    em+=`<button class="btn btn-s btn-sm" onclick="genSug('${e.id}')" style="margin-top:6px" id="sugBtn_${e.id}">Generate Examples</button>`;
 
-  em+=`<div class="em-input-area" style="margin-top:12px"><div class="dp-st">Write / Paste Example</div><textarea id="emIn_${e.id}" placeholder='Write or paste an example using "${e.expression}"...' rows="2"></textarea></div>`;
-  const isReview=due&&!e.mastered;const isActivation=noEx;
-  em+=`<div class="em-actions"><span class="em-note">${isActivation?'First example activates review cycle':isReview?'Saving counts as review #'+(e.reviewCount+1):'Add to your examples'}</span><button class="btn btn-p btn-sm" onclick="saveEx('${e.id}')">${isActivation?'Save & Activate':isReview?'Save & Review':'Save Example'}</button></div>`;
+    em+=`<div class="em-input-area" style="margin-top:12px"><div class="dp-st">Write / Paste Example</div><textarea id="emIn_${e.id}" placeholder='Write or paste an example using "${e.expression}"...' rows="2"></textarea></div>`;
+    em+=`<div class="em-actions"><span class="em-note">${isActivation?'First example activates review cycle':isReview?'Saving counts as review #'+(e.reviewCount+1):'Add to your examples'}</span><button class="btn btn-p btn-sm" onclick="saveEx('${e.id}')">${isActivation?'Save & Activate':isReview?'Save & Review':'Save Example'}</button></div>`;
+  }
   em+=`</div>`;
   emEl.innerHTML=em;
 }
