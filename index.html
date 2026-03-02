@@ -905,7 +905,17 @@ document.getElementById('addMo').addEventListener('click',function(e){if(e.targe
 document.addEventListener('keydown',function(e){if(e.key==='Escape')cMo();});
 
 if('scrollRestoration' in history)history.scrollRestoration='manual';
-load();lTh();rNav();rT();updKeyInd();window.scrollTo(0,0);
+load();
+// One-time fix: activations via Today tab were incorrectly recorded as R1 reviews
+D.expressions.forEach(e=>{
+  if(!e.mastered&&e.reviews.length>0&&(!e.examples||e.examples.length===0)&&e.reviews[0].date===e.learnedDate&&e.reviewCount>0){
+    if(!e.examples)e.examples=[];
+    e.examples.push({date:e.reviews[0].date,text:e.reviews[0].example});
+    e.reviews.shift();e.reviewCount--;
+    e.nextReviewDate=cNext(e.learnedDate,e.reviewCount);
+  }
+});save();
+lTh();rNav();rT();updKeyInd();window.scrollTo(0,0);
 if(!getGKEY())setTimeout(oKeyMo,500);
 </script>
 </body>
