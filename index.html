@@ -188,9 +188,10 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .em-actions{display:flex;gap:8px;margin-top:8px;justify-content:flex-end;align-items:center;}
 .em-note{font-size:10px;color:var(--text4);flex:1;}
 
-.loading{display:flex;align-items:center;justify-content:center;padding:20px;color:var(--text3);font-size:13px;gap:8px;}
-.spinner{width:18px;height:18px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite;}
-@keyframes spin{to{transform:rotate(360deg)}}
+.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;color:var(--text3);font-size:13px;gap:10px;}
+.load-bar{width:100%;height:3px;background:var(--border2);border-radius:2px;overflow:hidden;}
+.load-bar-inner{width:30%;height:100%;background:var(--accent);border-radius:2px;animation:loadSlide 1.2s ease-in-out infinite;}
+@keyframes loadSlide{0%{transform:translateX(-100%)}50%{transform:translateX(230%)}100%{transform:translateX(-100%)}}
 .added-badge{font-size:10px;color:var(--green);font-weight:600;}
 
 /* Modal */
@@ -389,7 +390,7 @@ async function genQuizT(id){
   const e=D.expressions.find(x=>x.id===id);if(!e)return;
   const btn=document.getElementById('tquizBtn_'+id);if(btn){btn.disabled=true;btn.textContent='Generating...';}
   const area=document.getElementById('tquiz_'+id);
-  if(area)area.innerHTML=`<div class="loading"><div class="spinner"></div>Generating quiz...</div>`;
+  if(area)area.innerHTML=`<div class="loading">Generating quiz...<div class="load-bar"><div class="load-bar-inner"></div></div></div>`;
   const prompt=`For the expression "${e.expression}" (meaning: ${e.meaning}), create a situational quiz. Generate a short, natural conversation where Person B responds using this expression. Then provide 4 options for what Person A said. Only 1 should be correct. Return JSON: {"response":"Person B's reply using the expression","correct":"What Person A said (correct)","wrong":["wrong1","wrong2","wrong3"]} Seed: ${Date.now()}`;
   try{
     const data=await callGem(prompt);const parsed=JSON.parse(data);quizCache[id]=parsed;
@@ -405,7 +406,7 @@ async function genQuiz(id){
   const e=D.expressions.find(x=>x.id===id);if(!e)return;
   const btn=document.getElementById('quizBtn_'+id);if(btn){btn.disabled=true;btn.textContent='Generating...';}
   const area=document.getElementById('quizArea_'+id);
-  if(area)area.innerHTML=`<div class="loading"><div class="spinner"></div>Generating quiz...</div>`;
+  if(area)area.innerHTML=`<div class="loading">Generating quiz...<div class="load-bar"><div class="load-bar-inner"></div></div></div>`;
   const prompt=`For the expression "${e.expression}" (meaning: ${e.meaning}), create a situational quiz. Generate a short, natural conversation where Person B responds using this expression. Then provide 4 options for what Person A said. Only 1 should be correct. Return JSON: {"response":"Person B's reply using the expression","correct":"What Person A said (correct)","wrong":["wrong1","wrong2","wrong3"]} Seed: ${Date.now()}`;
   try{
     const data=await callGem(prompt);const parsed=JSON.parse(data);quizCache[id]=parsed;
@@ -639,7 +640,7 @@ async function genSugT(id){
   const e=D.expressions.find(x=>x.id===id);if(!e)return;
   const btn=document.getElementById('tsugBtn_'+id);if(btn){btn.disabled=true;btn.textContent='Generating...';}
   const area=document.getElementById('tsug_'+id);
-  if(area)area.innerHTML=`<div class="loading"><div class="spinner"></div>Generating...</div>`;
+  if(area)area.innerHTML=`<div class="loading">Generating...<div class="load-bar"><div class="load-bar-inner"></div></div></div>`;
   const themes=['work','travel','friendship','food','technology','health','school','family','sports','movies','music','shopping','weather','hobbies','news'];const pick=themes.sort(()=>Math.random()-.5).slice(0,3).join(', ');const prompt=`Generate 5 natural example sentences using the English expression "${e.expression}" (meaning: ${e.meaning}). IMPORTANT: Vary the length — #1 should be short (5-8 words), #2 short-medium (8-12 words), #3 medium (12-16 words), #4 medium-long (16-20 words), #5 longer (20+ words). Use varied contexts like ${pick}. For each sentence, provide a natural Japanese translation. Return ONLY a JSON array of objects: [{"en":"English sentence","ja":"日本語訳"}]. Seed: ${Date.now()}`;
   try{
     const data=await callGem(prompt);const parsed=JSON.parse(data);sugCache[id]=parsed;
@@ -653,7 +654,7 @@ async function genSug(id){
   const e=D.expressions.find(x=>x.id===id);if(!e)return;
   const btn=document.getElementById('sugBtn_'+id);if(btn){btn.disabled=true;btn.textContent='Generating...';}
   const area=document.getElementById('sugArea_'+id);
-  if(area)area.innerHTML=`<div class="loading"><div class="spinner"></div>Generating...</div>`;
+  if(area)area.innerHTML=`<div class="loading">Generating...<div class="load-bar"><div class="load-bar-inner"></div></div></div>`;
   const themes=['work','travel','friendship','food','technology','health','school','family','sports','movies','music','shopping','weather','hobbies','news'];const pick=themes.sort(()=>Math.random()-.5).slice(0,3).join(', ');const prompt=`Generate 5 natural example sentences using the English expression "${e.expression}" (meaning: ${e.meaning}). IMPORTANT: Vary the length — #1 should be short (5-8 words), #2 short-medium (8-12 words), #3 medium (12-16 words), #4 medium-long (16-20 words), #5 longer (20+ words). Use varied contexts like ${pick}. For each sentence, provide a natural Japanese translation. Return ONLY a JSON array of objects: [{"en":"English sentence","ja":"日本語訳"}]. Seed: ${Date.now()}`;
   try{
     const data=await callGem(prompt);
@@ -827,7 +828,7 @@ function rDisc(){
       h+=`<div class="dc-h"><div><div class="dc-t">${tp.n}</div><div class="dc-sub">${tp.sub}</div></div><button class="btn btn-p btn-sm" onclick="genDL('${tk}')" ${dLoad[tk]?'disabled':''}>Generate 5 ▶</button></div>`;
       h+=`<div class="dc-list" id="dl_${tk}">`;
       const list=D.discCache[tk]?.list||[];
-      if(dLoad[tk])h+=`<div class="loading"><div class="spinner"></div>Generating...</div>`;
+      if(dLoad[tk])h+=`<div class="loading">Generating...<div class="load-bar"><div class="load-bar-inner"></div></div></div>`;
       else if(!list.length)h+=`<div class="empty" style="padding:20px"><div class="empty-text" style="font-size:12px">Click "Generate 5"</div></div>`;
       else list.forEach((it,i)=>{
         const added=D.expressions.some(e=>e.expression.toLowerCase()===it.expression.toLowerCase());
@@ -849,7 +850,7 @@ async function genDL(k){
 async function shDD(k,i){
   const it=D.discCache[k]?.list?.[i];if(!it)return;const area=document.getElementById('ddArea');
   const ck=it.expression;if(D.discCache[k].details[ck]){rnDD(it,D.discCache[k].details[ck],k,i);return;}
-  area.innerHTML=`<div class="dd"><div class="loading"><div class="spinner"></div>Loading details...</div></div>`;
+  area.innerHTML=`<div class="dd"><div class="loading">Loading details...<div class="load-bar"><div class="load-bar-inner"></div></div></div></div>`;
   const tp=DISC_TOPICS[k];const prompt=tp.detailPrompt(it);
   try{const data=await callGem(prompt);const parsed=JSON.parse(data);D.discCache[k].details[ck]=parsed;save();rnDD(it,parsed,k,i);}catch(e){area.innerHTML=`<div class="dd"><p>Error: ${e.message}</p></div>`;}
 }
