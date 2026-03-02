@@ -281,6 +281,32 @@ function save(){try{localStorage.setItem('ev2',JSON.stringify(D));}catch(e){}}
 function load(){try{const s=localStorage.getItem('ev2');if(s){D=JSON.parse(s);if(!D.expressions)D.expressions=[];if(!D.discCache)D.discCache={};Object.keys(DISC_TOPICS).forEach(k=>{if(!D.discCache[k])D.discCache[k]={list:[],details:{}};});if(!D.excl)D.excl={};Object.keys(DISC_TOPICS).forEach(k=>{if(!D.excl[k])D.excl[k]=[];});}}catch(e){}}
 function rProg(e){let h='<div class="prog">';for(let i=0;i<5;i++){const c=i<e.reviewCount?(e.mastered?'seg g':'seg f'):'seg';h+=`<div class="${c}"></div>`;}h+=`<span class="prog-l">${e.reviewCount}/5</span></div>`;return h;}
 function allEx(e){const re=(e.reviews||[]).filter(r=>r.example&&r.example!=='[Quiz: correct]').map(r=>({text:r.example,date:r.date}));const se=(e.examples||[]).map(x=>({text:x.text,date:x.date}));return[...re,...se].sort((a,b)=>(a.date||'').localeCompare(b.date||''));}
+// === skillme integration: postMessage to parent ===
+function notifyParent(type,payload){
+  if(window.parent===window)return;
+  window.parent.postMessage({source:'english-expression',type,payload},'*');
+}
+function computeStreak(){
+  const revDates=new Set();D.expressions.forEach(e=>(e.reviews||[]).forEach(r=>{if(r.date)revDates.add(r.date);}));
+  // also count activation dates
+  D.expressions.forEach(e=>{if(e.learnedDate)revDates.add(e.learnedDate);});
+  let streak=0;const d=new Date();
+  for(let i=0;i<365;i++){const ds=new Date(d);ds.setDate(ds.getDate()-i);const dk=ds.getFullYear()+'-'+String(ds.getMonth()+1).padStart(2,'0')+'-'+String(ds.getDate()).padStart(2,'0');if(revDates.has(dk))streak++;else if(i>0)break;}
+  return streak;
+}
+function buildSnapshot(){
+  const total=D.expressions.length;
+  const mastered=D.expressions.filter(e=>e.mastered).length;
+  const noex=D.expressions.filter(e=>isNoEx(e)).length;
+  const active=total-mastered-noex;
+  const due=D.expressions.filter(isDue).length;
+  return{total,active,due,mastered,streak:computeStreak()};
+}
+window.addEventListener('message',function(ev){
+  if(ev.data&&ev.data.type==='request:snapshot'){
+    notifyParent('snapshot',buildSnapshot());
+  }
+});
 
 // NAV
 function rNav(){const n=document.getElementById('nv');n.innerHTML='';const dueC=D.expressions.filter(isDue).length;const noExC=D.expressions.filter(isNoEx).length;const todayC=dueC+noExC;TABS.forEach(t=>{const b=document.createElement('button');b.className='ntab'+(ct===t.id?' active':'');b.textContent=t.label;if(t.id==='today'&&todayC>0){const bg=document.createElement('span');bg.className='ntab-badge';bg.textContent=todayC;b.appendChild(bg);}b.onclick=()=>{ct=t.id;try{localStorage.setItem('evtab',ct);}catch(e){}rNav();rT();};n.appendChild(b);});}
@@ -446,6 +472,7 @@ function doRevQuiz(id,prefix){
     e.activated=true;e.learnedDate=td();
     e.nextReviewDate=cNext(td(),0);
     save();delete quizCache[id];
+    notifyParent('task:activation',{expressionId:id,date:td()});
     const area=document.getElementById((prefix==='t'?'tquiz_':'quizArea_')+id);
     const btn=area?area.querySelector('.quiz-opt.correct'):null;
     playRevSound();fireConfetti(btn);
@@ -464,6 +491,7 @@ function doRevQuiz(id,prefix){
   if(justMastered){e.mastered=true;e.nextReviewDate=null;}
   else{e.nextReviewDate=cNext(td(),e.reviewCount);}
   save();delete quizCache[id];
+  notifyParent(justMastered?'task:mastery':'task:review',{expressionId:id,date:td(),reviewCount:e.reviewCount});
   // Effects
   const area=document.getElementById((prefix==='t'?'tquiz_':'quizArea_')+id);
   const btn=area?area.querySelector('.quiz-opt.correct'):null;
@@ -492,6 +520,7 @@ function doRev(id,inputId){
     e.activated=true;e.learnedDate=td();
     e.nextReviewDate=cNext(td(),0);
     save();delete sugCache[id];
+    notifyParent('task:activation',{expressionId:id,date:td()});
     const card=inp?inp.closest('.card'):null;
     const btn=inp?inp.parentElement.querySelector('.btn'):null;
     playRevSound();fireConfetti(btn);
@@ -511,6 +540,7 @@ function doRev(id,inputId){
   if(justMastered){e.mastered=true;e.nextReviewDate=null;}
   else{e.nextReviewDate=cNext(td(),e.reviewCount);}
   save();delete sugCache[id];
+  notifyParent(justMastered?'task:mastery':'task:review',{expressionId:id,date:td(),reviewCount:e.reviewCount});
   // Effects
   const card=inp?inp.closest('.card'):null;
   const btn=inp?inp.parentElement.querySelector('.btn'):null;
