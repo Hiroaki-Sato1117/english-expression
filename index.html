@@ -781,7 +781,8 @@ function lTh(){try{const t=localStorage.getItem('evth');if(t){document.documentE
 document.getElementById('addMo').addEventListener('click',function(e){if(e.target===this)cMo();});
 document.addEventListener('keydown',function(e){if(e.key==='Escape')cMo();});
 
-load();lTh();rNav();rT();updKeyInd();
+if('scrollRestoration' in history)history.scrollRestoration='manual';
+load();lTh();rNav();rT();updKeyInd();window.scrollTo(0,0);
 if(!getGKEY())setTimeout(oKeyMo,500);
 </script>
 </body>
