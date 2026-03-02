@@ -461,6 +461,26 @@ function doRev(id,inputId){
   const inp=document.getElementById(inputId);
   const ex=inp?inp.value.trim():'';
   if(!ex){alert('Please write an example sentence to complete the review.');return;}
+  // No-example activation (not a review)
+  if(isNoEx(e)){
+    if(!e.examples)e.examples=[];
+    e.examples.push({date:td(),text:ex});
+    e.activated=true;e.learnedDate=td();
+    e.nextReviewDate=cNext(td(),0);
+    save();delete sugCache[id];
+    const card=inp?inp.closest('.card'):null;
+    const btn=inp?inp.parentElement.querySelector('.btn'):null;
+    playRevSound();fireConfetti(btn);
+    if(ct==='today'&&card){card.classList.add('card-done');setTimeout(()=>{rToday();rNav();},650);}
+    else{if(ct==='today')rToday();rNav();}
+    if(ct==='all'){rAllList();rAllDet();rNav();}
+    setTimeout(()=>{
+      const duesLeft=D.expressions.filter(isDue).length;
+      const noExLeft=D.expressions.filter(isNoEx).length;
+      if(duesLeft===0&&noExLeft===0&&ct==='today'&&D.expressions.length){showAllDonePopup();}
+    },600);
+    return;
+  }
   e.reviews.push({date:td(),example:ex});
   e.reviewCount++;
   const justMastered=e.reviewCount>=5;
