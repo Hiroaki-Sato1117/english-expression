@@ -478,7 +478,7 @@ async function ansQuiz(id,idx,correctIdx,prefix){
     const loadEl=document.createElement('div');loadEl.className='quiz-exp';loadEl.dataset.idx=idx;loadEl.innerHTML='<div class="loading" style="padding:6px 0;font-size:12px">Generating explanation...<div class="load-bar"><div class="load-bar-inner"></div></div></div>';
     opts[idx].after(loadEl);
     try{
-      const prompt=`The expression is "${e.expression}" (meaning: ${e.meaning}). In a conversation, Person B said: "${qc.response}". The question was "What did Person A say?" and the user correctly chose: "${chosen}". Explain in 1-2 short sentences (in English) why this is the correct answer and how the conversation flows naturally. Return JSON: {"explanation":"..."}`;
+      const prompt=`The expression is "${e.expression}" (meaning: ${e.meaning}). In a conversation, Person B said: "${qc.response}". The question was "What did Person A say?" and the user correctly chose: "${chosen}". Explain in 1-2 short sentences in Japanese why this is the correct answer and how the conversation flows naturally. Return JSON: {"explanation":"日本語の解説"}`;
       const data=await callGem(prompt);const parsed=JSON.parse(data);
       loadEl.innerHTML=`<div style="padding:8px 12px;margin-bottom:8px;border-radius:8px;background:var(--greenBg);border:1px solid var(--green);font-size:13px;line-height:1.5;color:var(--text2)"><strong style="color:var(--green)">Correct!</strong> ${esc(parsed.explanation)}</div>`;
     }catch(err){loadEl.innerHTML=`<div style="padding:8px 12px;margin-bottom:8px;border-radius:8px;background:var(--greenBg);border:1px solid var(--green);font-size:13px;color:var(--green)"><strong>Correct!</strong></div>`;}
@@ -494,7 +494,7 @@ async function ansQuiz(id,idx,correctIdx,prefix){
     const loadEl=document.createElement('div');loadEl.className='quiz-exp';loadEl.dataset.idx=idx;loadEl.innerHTML='<div class="loading" style="padding:6px 0;font-size:12px">Generating explanation...<div class="load-bar"><div class="load-bar-inner"></div></div></div>';
     opts[idx].after(loadEl);
     try{
-      const prompt=`The expression is "${e.expression}" (meaning: ${e.meaning}). In a conversation, Person B said: "${qc.response}". The question was "What did Person A say?". The user chose: "${chosen}" but the correct answer was: "${qc.correct}". Explain in 1-2 short sentences (in English) why "${chosen}" is not the best fit here. Return JSON: {"explanation":"..."}`;
+      const prompt=`The expression is "${e.expression}" (meaning: ${e.meaning}). In a conversation, Person B said: "${qc.response}". The question was "What did Person A say?". The user chose: "${chosen}" but the correct answer was: "${qc.correct}". Explain in 1-2 short sentences in Japanese why "${chosen}" is not the best fit here. Return JSON: {"explanation":"日本語の解説"}`;
       const data=await callGem(prompt);const parsed=JSON.parse(data);
       loadEl.innerHTML=`<div style="padding:8px 12px;margin-bottom:8px;border-radius:8px;background:var(--redBg);border:1px solid var(--red);font-size:13px;line-height:1.5;color:var(--text2)"><strong style="color:var(--red)">Incorrect.</strong> ${esc(parsed.explanation)}</div>`;
     }catch(err){loadEl.innerHTML=`<div style="padding:8px 12px;margin-bottom:8px;border-radius:8px;background:var(--redBg);border:1px solid var(--red);font-size:13px;color:var(--red)"><strong>Incorrect.</strong></div>`;}
