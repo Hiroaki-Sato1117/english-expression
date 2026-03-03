@@ -599,7 +599,7 @@ function doRevOutput(id,prefix){
   if(ct==='all'){rAllList();rAllDet();rNav();}
 }
 const micSvg='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="1" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="17" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>';
-const micRecSvg='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="1" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="17" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>';
+const stopSvg='<svg width="16" height="16" viewBox="0 0 24 24" fill="var(--red)" stroke="none"><rect x="4" y="4" width="16" height="16" rx="3"/></svg>';
 let activeRec=null;
 function startVoice(id,prefix,el){
   // Toggle off if already recording
@@ -609,7 +609,7 @@ function startVoice(id,prefix,el){
   const rc=new SR();rc.lang='en-US';rc.continuous=true;rc.interimResults=true;
   const inp=document.getElementById((prefix==='t'?'toutIn_':'outIn_')+id);
   let finalText='';
-  if(el){el.innerHTML=micRecSvg;el.style.borderColor='var(--red)';}
+  if(el){el.innerHTML=stopSvg;el.style.borderColor='var(--red)';}
   rc.onresult=(ev)=>{
     let interim='';finalText='';
     for(let i=0;i<ev.results.length;i++){if(ev.results[i].isFinal)finalText+=ev.results[i][0].transcript;else interim+=ev.results[i][0].transcript;}
