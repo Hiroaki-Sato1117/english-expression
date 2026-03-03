@@ -268,7 +268,7 @@ const DISC_CATS=[
 ];
 const TABS=[{id:'today',label:'Tasks',r:rToday},{id:'all',label:'List',r:rAll},{id:'stats',label:'Stats',r:rStats},{id:'discover',label:'Discover',r:rDisc}];
 let D={expressions:[],discCache:{friends:{list:[],details:{}},suits:{list:[],details:{}}},excl:{friends:[],suits:[]}};
-let ct=(()=>{try{const t=localStorage.getItem('evtab');return t&&['all','today','stats','discover'].includes(t)?t:'today';}catch(e){return'today';}})(),selId=null,selDi=null,sugCache={},quizCache={};
+let ct=(()=>{try{const t=localStorage.getItem('evtab');return t&&['all','today','stats','discover'].includes(t)?t:'today';}catch(e){return'today';}})(),selId=null,selDi=null,sugCache={},quizCache={},outputCache={};
 
 const td=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
 const fmt=d=>d?((p=d.split('-'))&&`${+p[1]}/${+p[2]}`):'—';
@@ -367,12 +367,10 @@ function rToday(){
     });
     }
     if(noExItems.length){
-    h+=`<div style="margin:18px 0 10px;font-size:13px;font-weight:700;color:var(--orange);display:flex;align-items:center;gap:6px"><span style="font-size:16px">⚡</span> No Example Yet (${noExItems.length})</div>`;
+    h+=`<div style="margin:18px 0 10px;font-size:13px;font-weight:700;color:var(--orange);display:flex;align-items:center;gap:6px"><span style="font-size:16px">⚡</span> New Expressions (${noExItems.length})</div>`;
     noExItems.forEach(e=>{
       h+=`<div class="card" style="border-left:3px solid var(--orange)"><div class="c-expr">"${esc(e.expression)}" <button class="spk" onclick="speak('${esc(e.expression).replace(/'/g,"\\'")}')">${spkSvg}</button></div><div class="c-mean">${esc(e.meaning)}</div><div class="c-meta"><span class="badge noex">New</span><span>Added ${fmt(e.learnedDate)}</span></div>`;
-      h+=`<div style="margin:10px 0"><div class="dp-st">Situation Quiz</div><button class="btn btn-s btn-sm" onclick="genQuizT('${e.id}')" id="tquizBtn_${e.id}" style="margin-bottom:10px">Generate Quiz ▶</button><div id="tquiz_${e.id}">`;
-      const qc2=quizCache[e.id];if(qc2){h+=`<div style="margin-bottom:12px;padding:12px 16px;background:var(--accentLight2);border-radius:10px;border-left:3px solid var(--accent)"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Person B's Response</div><div style="font-size:14px;color:var(--text);line-height:1.5;display:flex;align-items:start;gap:6px"><span style="flex:1">${esc(qc2.response)}</span><button class="spk" onclick="speak(\`${esc(qc2.response).replace(/`/g,'')}\`)" style="flex-shrink:0">${spkSvg}</button></div></div>`;h+=`<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">What did Person A say?</div>`;h+=renderQuizOpts(e.id,qc2,'t');}
-      h+=`</div></div></div>`;
+      h+=`<div style="margin:10px 0"><div class="dp-st">Output Exercise</div><button class="btn btn-s btn-sm" onclick="genOutput('${e.id}','t')" id="toutBtn_${e.id}" style="margin-bottom:10px">Generate Prompt ▶</button><div id="toutput_${e.id}"></div></div></div>`;
     });
     }
   }
@@ -542,6 +540,75 @@ function checkAllDone(){
   },100);
 }
 
+// OUTPUT EXERCISE
+async function genOutput(id,prefix){
+  const e=D.expressions.find(x=>x.id===id);if(!e)return;
+  const btnId=(prefix==='t'?'toutBtn_':'outBtn_')+id;
+  const areaId=(prefix==='t'?'toutput_':'aoutput_')+id;
+  const btn=document.getElementById(btnId);if(btn){btn.disabled=true;btn.textContent='Generating...';}
+  const area=document.getElementById(areaId);
+  if(area)area.innerHTML=`<div class="loading">Generating prompt...<div class="load-bar"><div class="load-bar-inner"></div></div></div>`;
+  const prompt=`Given the expression "${e.expression}" (meaning: ${e.meaning}), create a natural conversational situation. Generate what Person A would say that naturally prompts Person B to respond using "${e.expression}". Make it realistic. Do NOT include "Person A:" or any labels. Return JSON: {"prompt":"What Person A says","context":"Brief situation description in Japanese"} Seed: ${Date.now()}`;
+  try{
+    const data=await callGem(prompt);const parsed=JSON.parse(data);outputCache[id]=parsed;
+    if(area){let h=`<div style="margin-bottom:12px;padding:12px 16px;background:var(--accentLight2);border-radius:10px;border-left:3px solid var(--accent)"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">${esc(parsed.context)}</div><div style="font-size:14px;color:var(--text);line-height:1.5;display:flex;align-items:start;gap:6px"><span style="flex:1">${esc(parsed.prompt)}</span><button class="spk" onclick="speak(\`${esc(parsed.prompt).replace(/`/g,'')}\`)" style="flex-shrink:0">${spkSvg}</button></div></div>`;
+    h+=`<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">Respond using "${esc(e.expression)}"</div>`;
+    h+=`<div style="display:flex;gap:8px;align-items:end"><textarea id="${prefix==='t'?'toutIn_':'outIn_'}${id}" placeholder="Type your response..." rows="2" style="flex:1;padding:10px 12px;border:1px solid var(--border2);border-radius:8px;font-family:Outfit,sans-serif;font-size:14px;resize:vertical;background:var(--surface);color:var(--text)"></textarea><button class="btn btn-s btn-sm" onclick="startVoice('${id}','${prefix}')" title="Voice input" style="flex-shrink:0;font-size:16px">🎤</button></div>`;
+    h+=`<button class="btn btn-p btn-sm" onclick="submitOutput('${id}','${prefix}')" style="margin-top:8px">Submit Response</button>`;
+    h+=`<div id="${prefix==='t'?'toutFb_':'outFb_'}${id}"></div>`;
+    area.innerHTML=h;}
+    playGenSound();
+  }catch(err){if(area)area.innerHTML=`<div style="font-size:12px;color:var(--red);padding:8px">Error: ${err.message}</div>`;}
+  if(btn){btn.disabled=false;btn.textContent='Generate Prompt ▶';}
+}
+async function submitOutput(id,prefix){
+  const e=D.expressions.find(x=>x.id===id);if(!e)return;
+  const oc=outputCache[id];if(!oc)return;
+  const inp=document.getElementById((prefix==='t'?'toutIn_':'outIn_')+id);
+  if(!inp||!inp.value.trim()){alert('Please type or speak your response.');return;}
+  const userResp=inp.value.trim();
+  const fbArea=document.getElementById((prefix==='t'?'toutFb_':'outFb_')+id);
+  if(fbArea)fbArea.innerHTML=`<div class="loading" style="padding:8px 0;font-size:12px">Getting feedback...<div class="load-bar"><div class="load-bar-inner"></div></div></div>`;
+  const prompt=`Expression: "${e.expression}" (meaning: ${e.meaning})\nPerson A said: "${oc.prompt}"\nUser (Person B) responded: "${userResp}"\n\nProvide detailed feedback in the following format:\n1. modelAnswer: A natural, ideal response using "${e.expression}" (in English)\n2. feedback: Detailed feedback on the user's response - was the expression used correctly? Is the phrasing natural? Suggestions for improvement. (in Japanese)\n3. intentExplanation: What Person A meant/intended by their statement (in Japanese)\n\nReturn JSON: {"modelAnswer":"English model answer","feedback":"日本語フィードバック","intentExplanation":"日本語の意図説明"}`;
+  try{
+    const data=await callGem(prompt);const parsed=JSON.parse(data);
+    let h=`<div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">`;
+    h+=`<div style="padding:10px 14px;border-radius:8px;background:var(--accentLight2);border:1px solid var(--accent)"><div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;margin-bottom:4px">Model Answer</div><div style="font-size:14px;color:var(--text);line-height:1.5;display:flex;align-items:start;gap:6px"><span style="flex:1">${esc(parsed.modelAnswer)}</span><button class="spk" onclick="speak(\`${esc(parsed.modelAnswer).replace(/`/g,'')}\`)" style="flex-shrink:0">${spkSvg}</button></div></div>`;
+    h+=`<div style="padding:10px 14px;border-radius:8px;background:var(--greenBg);border:1px solid var(--green)"><div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;margin-bottom:4px">Feedback</div><div style="font-size:13px;color:var(--text2);line-height:1.6">${esc(parsed.feedback)}</div></div>`;
+    h+=`<div style="padding:10px 14px;border-radius:8px;background:rgba(245,158,11,.08);border:1px solid #d97706"><div style="font-size:10px;font-weight:700;color:#d97706;text-transform:uppercase;margin-bottom:4px">Person A's Intent</div><div style="font-size:13px;color:var(--text2);line-height:1.6">${esc(parsed.intentExplanation)}</div></div>`;
+    h+=`</div>`;
+    h+=`<div class="quiz-complete-wrap" style="margin-top:10px;text-align:center"><button class="btn btn-p btn-sm" onclick="doRevOutput('${id}','${prefix}')">Complete Task ✓</button></div>`;
+    if(fbArea)fbArea.innerHTML=h;
+  }catch(err){if(fbArea)fbArea.innerHTML=`<div style="font-size:12px;color:var(--red);padding:8px">Error: ${err.message}</div>`;}
+}
+function doRevOutput(id,prefix){
+  const e=D.expressions.find(x=>x.id===id);if(!e)return;
+  const oc=outputCache[id];
+  const inp=document.getElementById((prefix==='t'?'toutIn_':'outIn_')+id);
+  const userResp=inp?inp.value.trim():'';
+  const exText=oc?`"${oc.prompt}" → "${userResp}"`:'[Output exercise]';
+  if(!e.examples)e.examples=[];
+  e.examples.push({date:td(),text:exText});
+  e.activated=true;e.learnedDate=td();
+  e.nextReviewDate=cNext(td(),0);
+  save();delete outputCache[id];
+  notifyParent('task:activation',{expressionId:id,date:td()});
+  const area=document.getElementById((prefix==='t'?'toutput_':'aoutput_')+id);
+  playRevSound();fireConfetti(area);
+  if(ct==='today'){const card=area?area.closest('.card'):null;if(card){card.classList.add('card-done');setTimeout(()=>{card.remove();rNav();checkAllDone();},650);}else{rNav();checkAllDone();}}
+  if(ct==='all'){rAllList();rAllDet();rNav();}
+}
+function startVoice(id,prefix){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){alert('Voice input is not supported in this browser.');return;}
+  const rc=new SR();rc.lang='en-US';rc.interimResults=false;
+  const btn=event.currentTarget;if(btn){btn.textContent='...';btn.disabled=true;}
+  rc.onresult=(ev)=>{const txt=ev.results[0][0].transcript;const inp=document.getElementById((prefix==='t'?'toutIn_':'outIn_')+id);if(inp){inp.value=txt;inp.focus();}};
+  rc.onend=()=>{if(btn){btn.textContent='🎤';btn.disabled=false;}};
+  rc.onerror=()=>{if(btn){btn.textContent='🎤';btn.disabled=false;}};
+  rc.start();
+}
+
 function doRev(id,inputId){
   const e=D.expressions.find(x=>x.id===id);if(!e)return;
   const inp=document.getElementById(inputId);
@@ -689,13 +756,18 @@ function rAllDet(){
   const exs=allEx(e);
   if(exs.length){em+=`<div class="dp-st">Saved Examples</div>`;exs.forEach((r,i)=>{em+=`<div class="em-saved"><span class="em-num">${i+1}.</span><span class="et">${esc(r.text)}</span><button class="spk" onclick="speak(\`${esc(r.text).replace(/`/g,'')}\`)">${spkSvg}</button><span class="emeta">${fmt(r.date)}</span></div>`;});}
 
-  if(quizMode){
+  if(isActivation){
+    em+=`<div class="dp-st" style="margin-top:12px">Output Exercise</div>`;
+    em+=`<button class="btn btn-s btn-sm" onclick="genOutput('${e.id}','a')" style="margin-bottom:10px" id="outBtn_${e.id}">Generate Prompt ▶</button>`;
+    em+=`<div id="aoutput_${e.id}"></div>`;
+    em+=`<div class="em-actions"><span class="em-note">Respond using the expression to activate</span></div>`;
+  } else if(isReview){
     em+=`<div class="dp-st" style="margin-top:12px">Quiz</div>`;
     em+=`<button class="btn btn-s btn-sm" onclick="genQuiz('${e.id}')" style="margin-bottom:10px" id="quizBtn_${e.id}">Generate Quiz ▶</button>`;
     em+=`<div id="quizArea_${e.id}">`;
     const qc=quizCache[e.id];if(qc){em+=`<div style="margin-bottom:12px;padding:12px 16px;background:var(--accentLight2);border-radius:10px;border-left:3px solid var(--accent)"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Person B's Response</div><div style="font-size:14px;color:var(--text);line-height:1.5;display:flex;align-items:start;gap:6px"><span style="flex:1">${esc(qc.response)}</span><button class="spk" onclick="speak(\`${esc(qc.response).replace(/\x60/g,'')}\`)" style="flex-shrink:0">${spkSvg}</button></div></div>`;em+=`<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">What did Person A say?</div>`;em+=renderQuizOpts(e.id,qc,'a');}
     em+=`</div>`;
-    em+=`<div class="em-actions"><span class="em-note">${isActivation?'Complete the quiz to activate':'Complete the quiz to finish Review '+(e.reviewCount+1)}</span></div>`;
+    em+=`<div class="em-actions"><span class="em-note">Complete the quiz to finish Review ${e.reviewCount+1}</span></div>`;
   } else {
     em+=`<div class="dp-st" style="margin-top:12px">AI Suggestions</div>`;
     em+=`<div id="sugArea_${e.id}">`;
