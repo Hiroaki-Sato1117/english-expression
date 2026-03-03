@@ -506,6 +506,8 @@ function doRevQuiz(id,prefix){
   const e=D.expressions.find(x=>x.id===id);if(!e)return;
   const qc=quizCache[id];
   const quizEx=qc?`"${qc.correct}" — "${qc.response}"`:'[Quiz: correct]';
+  const area=document.getElementById((prefix==='t'?'tquiz_':'quizArea_')+id);
+  const btn=area?area.querySelector('.quiz-opt.correct'):null;
   // No-example activation via quiz
   if(isNoEx(e)){
     if(!e.examples)e.examples=[];
@@ -514,16 +516,9 @@ function doRevQuiz(id,prefix){
     e.nextReviewDate=cNext(td(),0);
     save();delete quizCache[id];
     notifyParent('task:activation',{expressionId:id,date:td()});
-    const area=document.getElementById((prefix==='t'?'tquiz_':'quizArea_')+id);
-    const btn=area?area.querySelector('.quiz-opt.correct'):null;
     playRevSound();fireConfetti(btn);
-    if(ct==='today'){const card=area?area.closest('.card'):null;if(card){card.classList.add('card-done');setTimeout(()=>{rToday();rNav();},650);}else{rToday();rNav();}}
+    if(ct==='today'){const card=area?area.closest('.card'):null;if(card){card.classList.add('card-done');setTimeout(()=>{card.remove();rNav();checkAllDone();},650);}else{rNav();checkAllDone();}}
     if(ct==='all'){rAllList();rAllDet();rNav();}
-    setTimeout(()=>{
-      const duesLeft=D.expressions.filter(isDue).length;
-      const noExLeft=D.expressions.filter(isNoEx).length;
-      if(duesLeft===0&&noExLeft===0&&ct==='today'&&D.expressions.length){showAllDonePopup();}
-    },600);
     return;
   }
   e.reviews.push({date:td(),example:quizEx});
@@ -533,20 +528,17 @@ function doRevQuiz(id,prefix){
   else{e.nextReviewDate=cNext(td(),e.reviewCount);}
   save();delete quizCache[id];
   notifyParent(justMastered?'task:mastery':'task:review',{expressionId:id,date:td(),reviewCount:e.reviewCount});
-  // Effects
-  const area=document.getElementById((prefix==='t'?'tquiz_':'quizArea_')+id);
-  const btn=area?area.querySelector('.quiz-opt.correct'):null;
   if(justMastered){playMasterSound();fireConfetti(btn);}
   else{playRevSound();fireConfetti(btn);}
-  // Slide-out animation on Today tab
-  if(ct==='today'){const card=area?area.closest('.card'):null;if(card){card.classList.add('card-done');setTimeout(()=>{rToday();rNav();},650);}else{rToday();rNav();}}
+  if(ct==='today'){const card=area?area.closest('.card'):null;if(card){card.classList.add('card-done');setTimeout(()=>{card.remove();rNav();checkAllDone();},650);}else{rNav();checkAllDone();}}
   if(ct==='all'){rAllList();rAllDet();rNav();}
-  // Check if all today's tasks are done
+}
+function checkAllDone(){
   setTimeout(()=>{
     const duesLeft=D.expressions.filter(isDue).length;
     const noExLeft=D.expressions.filter(isNoEx).length;
     if(duesLeft===0&&noExLeft===0&&ct==='today'&&D.expressions.length){showAllDonePopup();}
-  },600);
+  },100);
 }
 
 function doRev(id,inputId){
