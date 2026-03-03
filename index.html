@@ -674,8 +674,9 @@ function doRev(id,inputId){
 
 // Keyboard shortcuts
 document.addEventListener('keydown',function(ev){
-  // Cmd+ArrowLeft / Cmd+ArrowRight: switch tabs
-  if((ev.metaKey||ev.ctrlKey)&&(ev.key==='ArrowLeft'||ev.key==='ArrowRight')){
+  // Cmd+ArrowLeft / Cmd+ArrowRight: switch tabs (skip if in input/textarea)
+  const ae=document.activeElement;const inInput=ae&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'||ae.isContentEditable);
+  if(!inInput&&(ev.metaKey||ev.ctrlKey)&&(ev.key==='ArrowLeft'||ev.key==='ArrowRight')){
     ev.preventDefault();
     const ids=TABS.map(t=>t.id);const ci=ids.indexOf(ct);
     if(ev.key==='ArrowLeft'&&ci>0){ct=ids[ci-1];rNav();rT();}
