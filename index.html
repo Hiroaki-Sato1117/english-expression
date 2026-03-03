@@ -357,12 +357,14 @@ function rToday(){
   } else {
     if(dues.length){
     dues.forEach(e=>{
-      const od=isOD(e);const exs=allEx(e);const isWriting=e.reviewCount===2||e.reviewCount===4;
-      h+=`<div class="card"><div class="c-expr">"${esc(e.expression)}" <button class="spk" onclick="speak('${esc(e.expression).replace(/'/g,"\\'")}')">${spkSvg}</button></div><div class="c-mean">${esc(e.meaning)}</div><div class="c-meta"><span class="badge ${od?'overdue':'due'}">${od?'Overdue':'Due Today'}</span><span>Review ${e.reviewCount+1} / 5</span></div>`;
+      const od=isOD(e);const exs=allEx(e);const rc=e.reviewCount;const isWriting=rc===1||rc===4;const isAnsQ=rc===2;
+      h+=`<div class="card"><div class="c-expr">"${esc(e.expression)}" <button class="spk" onclick="speak('${esc(e.expression).replace(/'/g,"\\'")}')">${spkSvg}</button></div><div class="c-mean">${esc(e.meaning)}</div><div class="c-meta"><span class="badge ${od?'overdue':'due'}">${od?'Overdue':'Due Today'}</span><span>Review ${rc+1} / 5</span></div>`;
       h+=rProg(e);
       if(exs.length){h+=`<div class="past-ex"><div class="pe-title">Past Examples</div>`;exs.forEach((r,i)=>{h+=`<div class="pe-item"><span class="en">${i+1}.</span>${esc(r.text)}<button class="spk" onclick="speak(\`${esc(r.text).replace(/`/g,'')}\`)">${spkSvg}</button><span class="ed">${fmt(r.date)}</span></div>`;});h+=`</div>`;}
       if(isWriting){
         h+=`<div style="margin:10px 0"><div class="dp-st">Output Writing</div><button class="btn btn-s btn-sm" onclick="genOutput('${e.id}','t')" id="toutBtn_${e.id}" style="margin-bottom:10px">Generate Prompt ▶</button><div id="toutput_${e.id}"></div></div></div>`;
+      } else if(isAnsQ){
+        h+=`<div style="margin:10px 0"><div class="dp-st">Answer Quiz</div><button class="btn btn-s btn-sm" onclick="genAnsQuiz('${e.id}','t')" id="taqBtn_${e.id}" style="margin-bottom:10px">Generate Quiz ▶</button><div id="taq_${e.id}"></div></div></div>`;
       } else {
         h+=`<div style="margin:10px 0"><div class="dp-st">Situation Quiz</div><button class="btn btn-s btn-sm" onclick="genQuizT('${e.id}')" id="tquizBtn_${e.id}" style="margin-bottom:10px">Generate Quiz ▶</button><div id="tquiz_${e.id}">`;
         const qc=quizCache[e.id];if(qc){h+=`<div style="margin-bottom:12px;padding:12px 16px;background:var(--accentLight2);border-radius:10px;border-left:3px solid var(--accent)"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Person B's Response</div><div style="font-size:14px;color:var(--text);line-height:1.5;display:flex;align-items:start;gap:6px"><span style="flex:1">${esc(qc.response)}</span><button class="spk" onclick="speak(\`${esc(qc.response).replace(/`/g,'')}\`)" style="flex-shrink:0">${spkSvg}</button></div></div>`;h+=`<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">What did Person A say?</div>`;h+=renderQuizOpts(e.id,qc,'t');}
@@ -606,13 +608,26 @@ function doRevAnsQuiz(id,prefix){
   const areaId=(prefix==='t'?'taq_':'aaq_')+id;
   const area=document.getElementById(areaId);
   const btn=area?area.querySelector('.quiz-opt.correct'):null;
-  if(!e.examples)e.examples=[];
-  e.examples.push({date:td(),text:quizEx});
-  e.activated=true;e.learnedDate=td();
-  e.nextReviewDate=cNext(td(),0);
-  save();delete ansQCache[id];
-  notifyParent('task:activation',{expressionId:id,date:td()});
-  playRevSound();fireConfetti(btn);
+  if(isNoEx(e)){
+    if(!e.examples)e.examples=[];
+    e.examples.push({date:td(),text:quizEx});
+    e.activated=true;e.learnedDate=td();
+    e.nextReviewDate=cNext(td(),0);
+    save();delete ansQCache[id];
+    notifyParent('task:activation',{expressionId:id,date:td()});
+    playRevSound();fireConfetti(btn);
+  } else {
+    if(!e.reviews)e.reviews=[];
+    e.reviews.push({date:td(),example:quizEx});
+    e.reviewCount++;
+    const justMastered=e.reviewCount>=5;
+    if(justMastered){e.mastered=true;e.nextReviewDate=null;}
+    else{e.nextReviewDate=cNext(td(),e.reviewCount);}
+    save();delete ansQCache[id];
+    notifyParent(justMastered?'task:mastery':'task:review',{expressionId:id,date:td(),reviewCount:e.reviewCount});
+    if(justMastered){playMasterSound();fireConfetti(btn);}
+    else{playRevSound();fireConfetti(btn);}
+  }
   if(ct==='today'){const card=area?area.closest('.card'):null;if(card){card.classList.add('card-done');setTimeout(()=>{card.remove();rNav();checkAllDone();},650);}else{rNav();checkAllDone();}}
   if(ct==='all'){rAllList();rAllDet();rNav();}
 }
@@ -864,11 +879,16 @@ function rAllDet(){
     em+=`<button class="btn btn-s btn-sm" onclick="genAnsQuiz('${e.id}','a')" style="margin-bottom:10px" id="aqBtn_${e.id}">Generate Quiz ▶</button>`;
     em+=`<div id="aaq_${e.id}"></div>`;
     em+=`<div class="em-actions"><span class="em-note">Complete the quiz to activate</span></div>`;
-  } else if(isReview&&(e.reviewCount===2||e.reviewCount===4)){
+  } else if(isReview&&(e.reviewCount===1||e.reviewCount===4)){
     em+=`<div class="dp-st" style="margin-top:12px">Output Writing</div>`;
     em+=`<button class="btn btn-s btn-sm" onclick="genOutput('${e.id}','a')" style="margin-bottom:10px" id="outBtn_${e.id}">Generate Prompt ▶</button>`;
     em+=`<div id="aoutput_${e.id}"></div>`;
     em+=`<div class="em-actions"><span class="em-note">Complete to finish Review ${e.reviewCount+1}</span></div>`;
+  } else if(isReview&&e.reviewCount===2){
+    em+=`<div class="dp-st" style="margin-top:12px">Answer Quiz</div>`;
+    em+=`<button class="btn btn-s btn-sm" onclick="genAnsQuiz('${e.id}','a')" style="margin-bottom:10px" id="aqBtn_${e.id}">Generate Quiz ▶</button>`;
+    em+=`<div id="aaq_${e.id}"></div>`;
+    em+=`<div class="em-actions"><span class="em-note">Complete the quiz to finish Review ${e.reviewCount+1}</span></div>`;
   } else if(isReview){
     em+=`<div class="dp-st" style="margin-top:12px">Situation Quiz</div>`;
     em+=`<button class="btn btn-s btn-sm" onclick="genQuiz('${e.id}')" style="margin-bottom:10px" id="quizBtn_${e.id}">Generate Quiz ▶</button>`;
