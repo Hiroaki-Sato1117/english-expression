@@ -333,8 +333,8 @@ function rToday(){
   const dues=D.expressions.filter(isDue).sort((a,b)=>(a.nextReviewDate||'').localeCompare(b.nextReviewDate||''));
   const noExItems=D.expressions.filter(isNoEx).sort((a,b)=>(a.learnedDate||'').localeCompare(b.learnedDate||''));
   const totalTasks=dues.length+noExItems.length;
-  // Count reviews by stage (R1~R5)
-  const rCounts={};dues.forEach(e=>{const k='R'+(e.reviewCount+1);rCounts[k]=(rCounts[k]||0)+1;});
+  // Count reviews by stage
+  const rCounts={};dues.forEach(e=>{const k='レビュー'+(e.reviewCount+1);rCounts[k]=(rCounts[k]||0)+1;});
   // Tomorrow's tasks
   const tmrw=new Date();tmrw.setDate(tmrw.getDate()+1);const tmrwStr=tmrw.getFullYear()+'-'+String(tmrw.getMonth()+1).padStart(2,'0')+'-'+String(tmrw.getDate()).padStart(2,'0');
   const tmrwDue=D.expressions.filter(e=>!e.mastered&&!isNoEx(e)&&e.nextReviewDate&&e.nextReviewDate<=tmrwStr&&e.nextReviewDate>td()).length;
@@ -343,7 +343,7 @@ function rToday(){
   h+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div style="font-size:22px;font-weight:800;color:var(--text)">Today's Tasks <span style="font-family:'JetBrains Mono',monospace;color:var(--accent)">${totalTasks}</span></div></div>`;
   h+=`<div style="display:flex;gap:8px;flex-wrap:wrap">`;
   if(noExItems.length) h+=`<div style="display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;background:var(--orangeBg);font-size:12px;font-weight:600;color:var(--orange)">No Example <span style="font-family:'JetBrains Mono',monospace;font-weight:800">${noExItems.length}</span></div>`;
-  ['R1','R2','R3','R4','R5'].forEach(k=>{if(rCounts[k]) h+=`<div style="display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;background:${k==='R5'?'var(--goldBg)':'var(--accentLight)'};font-size:12px;font-weight:600;color:${k==='R5'?'var(--gold)':'var(--accent)'}">${k} <span style="font-family:'JetBrains Mono',monospace;font-weight:800">${rCounts[k]}</span></div>`;});
+  ['レビュー1','レビュー2','レビュー3','レビュー4','レビュー5'].forEach(k=>{if(rCounts[k]) h+=`<div style="display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;background:${k==='レビュー5'?'var(--goldBg)':'var(--accentLight)'};font-size:12px;font-weight:600;color:${k==='レビュー5'?'var(--gold)':'var(--accent)'}">${k} <span style="font-family:'JetBrains Mono',monospace;font-weight:800">${rCounts[k]}</span></div>`;});
   if(!totalTasks) h+=`<div style="font-size:12px;color:var(--text4)">No tasks for today</div>`;
   h+=`</div></div>`;
   h+=`<div style="min-width:100px;background:var(--surface);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow);padding:16px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center">`;
@@ -357,7 +357,7 @@ function rToday(){
     if(dues.length){
     dues.forEach(e=>{
       const od=isOD(e);const exs=allEx(e);
-      h+=`<div class="card"><div class="c-expr">"${esc(e.expression)}" <button class="spk" onclick="speak('${esc(e.expression).replace(/'/g,"\\'")}')">${spkSvg}</button></div><div class="c-mean">${esc(e.meaning)}</div><div class="c-meta"><span class="badge ${od?'overdue':'due'}">${od?'Overdue':'Due Today'}</span><span>Review #${e.reviewCount+1} of 5</span></div>`;
+      h+=`<div class="card"><div class="c-expr">"${esc(e.expression)}" <button class="spk" onclick="speak('${esc(e.expression).replace(/'/g,"\\'")}')">${spkSvg}</button></div><div class="c-mean">${esc(e.meaning)}</div><div class="c-meta"><span class="badge ${od?'overdue':'due'}">${od?'Overdue':'Due Today'}</span><span>レビュー${e.reviewCount+1} / 5</span></div>`;
       h+=rProg(e);
       if(exs.length){h+=`<div class="past-ex"><div class="pe-title">Past Examples</div>`;exs.forEach((r,i)=>{h+=`<div class="pe-item"><span class="en">${i+1}.</span>${esc(r.text)}<button class="spk" onclick="speak(\`${esc(r.text).replace(/`/g,'')}\`)">${spkSvg}</button><span class="ed">${fmt(r.date)}</span></div>`;});h+=`</div>`;}
       h+=`<div style="margin:10px 0"><div class="dp-st">Situation Quiz</div><div id="tquiz_${e.id}">`;
@@ -675,7 +675,7 @@ function rAllDet(){
     const qc=quizCache[e.id];if(qc){em+=`<div style="margin-bottom:12px;padding:12px 16px;background:var(--accentLight2);border-radius:10px;border-left:3px solid var(--accent)"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Person B's Response</div><div style="font-size:14px;color:var(--text);line-height:1.5;display:flex;align-items:start;gap:6px"><span style="flex:1">${esc(qc.response)}</span><button class="spk" onclick="speak(\`${esc(qc.response).replace(/\x60/g,'')}\`)" style="flex-shrink:0">${spkSvg}</button></div></div>`;em+=`<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">What did Person A say?</div>`;em+=renderQuizOpts(e.id,qc,'a');}
     em+=`</div>`;
     em+=`<button class="btn btn-s btn-sm" onclick="genQuiz('${e.id}')" style="margin-top:6px" id="quizBtn_${e.id}">Generate Quiz ▶</button>`;
-    em+=`<div class="em-actions"><span class="em-note">${isActivation?'Complete the quiz to activate':'Complete the quiz to finish review #'+(e.reviewCount+1)}</span></div>`;
+    em+=`<div class="em-actions"><span class="em-note">${isActivation?'Complete the quiz to activate':'Complete the quiz to finish レビュー'+(e.reviewCount+1)}</span></div>`;
   } else {
     em+=`<div class="dp-st" style="margin-top:12px">AI Suggestions</div>`;
     em+=`<div id="sugArea_${e.id}">`;
