@@ -302,9 +302,24 @@ function buildSnapshot(){
   const due=D.expressions.filter(isDue).length;
   return{total,active,due,mastered,streak:computeStreak()};
 }
+function buildTasks(){
+  const today=td();
+  const tasks=[];
+  D.expressions.forEach(function(e){
+    if(isDue(e)){
+      tasks.push({id:e.id,title:e.expression,subtitle:e.meaning||'',taskType:'review',reviewStage:e.reviewCount,isOverdue:e.nextReviewDate<today,dueDate:e.nextReviewDate||null});
+    }else if(isNoEx(e)){
+      tasks.push({id:e.id,title:e.expression,subtitle:e.meaning||'',taskType:'activation',reviewStage:null,isOverdue:false,dueDate:null});
+    }
+  });
+  return tasks;
+}
 window.addEventListener('message',function(ev){
   if(ev.data&&ev.data.type==='request:snapshot'){
     notifyParent('snapshot',buildSnapshot());
+  }
+  if(ev.data&&ev.data.type==='request:tasks'){
+    notifyParent('tasks',{tasks:buildTasks()});
   }
 });
 
@@ -346,7 +361,7 @@ function rToday(){
       h+=rProg(e);
       if(exs.length){h+=`<div class="past-ex"><div class="pe-title">Past Examples</div>`;exs.forEach((r,i)=>{h+=`<div class="pe-item"><span class="en">${i+1}.</span>${esc(r.text)}<button class="spk" onclick="speak(\`${esc(r.text).replace(/`/g,'')}\`)">${spkSvg}</button><span class="ed">${fmt(r.date)}</span></div>`;});h+=`</div>`;}
       h+=`<div style="margin:10px 0"><div class="dp-st">Situation Quiz</div><div id="tquiz_${e.id}">`;
-      const qc=quizCache[e.id];if(qc){h+=`<div style="margin-bottom:12px;padding:12px 16px;background:var(--accentLight2);border-radius:10px;border-left:3px solid var(--accent)"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Person B's Response</div><div style="font-size:14px;color:var(--text);line-height:1.5">${esc(qc.response)}</div></div>`;h+=`<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">What did Person A say?</div>`;h+=renderQuizOpts(e.id,qc,'t');}
+      const qc=quizCache[e.id];if(qc){h+=`<div style="margin-bottom:12px;padding:12px 16px;background:var(--accentLight2);border-radius:10px;border-left:3px solid var(--accent)"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Person B's Response</div><div style="font-size:14px;color:var(--text);line-height:1.5;display:flex;align-items:start;gap:6px"><span style="flex:1">${esc(qc.response)}</span><button class="spk" onclick="speak(\`${esc(qc.response).replace(/`/g,'')}\`)" style="flex-shrink:0">${spkSvg}</button></div></div>`;h+=`<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">What did Person A say?</div>`;h+=renderQuizOpts(e.id,qc,'t');}
       h+=`</div><button class="btn btn-s btn-sm" onclick="genQuizT('${e.id}')" id="tquizBtn_${e.id}">Generate Quiz ▶</button></div></div>`;
     });
     }
@@ -355,7 +370,7 @@ function rToday(){
     noExItems.forEach(e=>{
       h+=`<div class="card" style="border-left:3px solid var(--orange)"><div class="c-expr">"${esc(e.expression)}" <button class="spk" onclick="speak('${esc(e.expression).replace(/'/g,"\\'")}')">${spkSvg}</button></div><div class="c-mean">${esc(e.meaning)}</div><div class="c-meta"><span class="badge noex">New</span><span>Added ${fmt(e.learnedDate)}</span></div>`;
       h+=`<div style="margin:10px 0"><div class="dp-st">Situation Quiz</div><div id="tquiz_${e.id}">`;
-      const qc2=quizCache[e.id];if(qc2){h+=`<div style="margin-bottom:12px;padding:12px 16px;background:var(--accentLight2);border-radius:10px;border-left:3px solid var(--accent)"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Person B's Response</div><div style="font-size:14px;color:var(--text);line-height:1.5">${esc(qc2.response)}</div></div>`;h+=`<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">What did Person A say?</div>`;h+=renderQuizOpts(e.id,qc2,'t');}
+      const qc2=quizCache[e.id];if(qc2){h+=`<div style="margin-bottom:12px;padding:12px 16px;background:var(--accentLight2);border-radius:10px;border-left:3px solid var(--accent)"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Person B's Response</div><div style="font-size:14px;color:var(--text);line-height:1.5;display:flex;align-items:start;gap:6px"><span style="flex:1">${esc(qc2.response)}</span><button class="spk" onclick="speak(\`${esc(qc2.response).replace(/`/g,'')}\`)" style="flex-shrink:0">${spkSvg}</button></div></div>`;h+=`<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">What did Person A say?</div>`;h+=renderQuizOpts(e.id,qc2,'t');}
       h+=`</div><button class="btn btn-s btn-sm" onclick="genQuizT('${e.id}')" id="tquizBtn_${e.id}">Generate Quiz ▶</button></div></div>`;
     });
     }
@@ -411,7 +426,7 @@ function renderQuizOpts(id,quiz,prefix){
   // Shuffle
   for(let i=opts.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[opts[i],opts[j]]=[opts[j],opts[i]];}
   const ci=opts.findIndex(o=>o.correct);
-  let h='';opts.forEach((o,idx)=>{h+=`<div class="quiz-opt" style="margin-bottom:8px" onclick="ansQuiz('${id}',${idx},${ci},'${prefix}')">${esc(o.text)}</div>`;});
+  let h='';opts.forEach((o,idx)=>{h+=`<div class="quiz-opt" style="margin-bottom:8px;display:flex;align-items:center;gap:8px" onclick="ansQuiz('${id}',${idx},${ci},'${prefix}')"><span style="flex:1">${esc(o.text)}</span><button class="spk" onclick="event.stopPropagation();speak(\`${esc(o.text).replace(/`/g,'')}\`)" style="flex-shrink:0">${spkSvg}</button></div>`;});
   return h;
 }
 async function genQuizT(id){
@@ -422,7 +437,7 @@ async function genQuizT(id){
   const prompt=`For the expression "${e.expression}" (meaning: ${e.meaning}), create a situational quiz. Generate a short, natural conversation where Person B responds using this expression. Then provide 4 options for what Person A said. Only 1 should be correct. Return JSON: {"response":"Person B's reply using the expression","correct":"What Person A said (correct)","wrong":["wrong1","wrong2","wrong3"]} Seed: ${Date.now()}`;
   try{
     const data=await callGem(prompt);const parsed=JSON.parse(data);quizCache[id]=parsed;
-    if(area){let h=`<div style="margin-bottom:12px;padding:12px 16px;background:var(--accentLight2);border-radius:10px;border-left:3px solid var(--accent)"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Person B's Response</div><div style="font-size:14px;color:var(--text);line-height:1.5">${esc(parsed.response)}</div></div>`;
+    if(area){let h=`<div style="margin-bottom:12px;padding:12px 16px;background:var(--accentLight2);border-radius:10px;border-left:3px solid var(--accent)"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Person B's Response</div><div style="font-size:14px;color:var(--text);line-height:1.5;display:flex;align-items:start;gap:6px"><span style="flex:1">${esc(parsed.response)}</span><button class="spk" onclick="speak(\`${esc(parsed.response).replace(/`/g,'')}\`)" style="flex-shrink:0">${spkSvg}</button></div></div>`;
     h+=`<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">What did Person A say?</div>`;
     h+=renderQuizOpts(id,parsed,'t');
     area.innerHTML=h;}
@@ -438,7 +453,7 @@ async function genQuiz(id){
   const prompt=`For the expression "${e.expression}" (meaning: ${e.meaning}), create a situational quiz. Generate a short, natural conversation where Person B responds using this expression. Then provide 4 options for what Person A said. Only 1 should be correct. Return JSON: {"response":"Person B's reply using the expression","correct":"What Person A said (correct)","wrong":["wrong1","wrong2","wrong3"]} Seed: ${Date.now()}`;
   try{
     const data=await callGem(prompt);const parsed=JSON.parse(data);quizCache[id]=parsed;
-    if(area){let h=`<div style="margin-bottom:12px;padding:12px 16px;background:var(--accentLight2);border-radius:10px;border-left:3px solid var(--accent)"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Person B's Response</div><div style="font-size:14px;color:var(--text);line-height:1.5">${esc(parsed.response)}</div></div>`;
+    if(area){let h=`<div style="margin-bottom:12px;padding:12px 16px;background:var(--accentLight2);border-radius:10px;border-left:3px solid var(--accent)"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Person B's Response</div><div style="font-size:14px;color:var(--text);line-height:1.5;display:flex;align-items:start;gap:6px"><span style="flex:1">${esc(parsed.response)}</span><button class="spk" onclick="speak(\`${esc(parsed.response).replace(/`/g,'')}\`)" style="flex-shrink:0">${spkSvg}</button></div></div>`;
     h+=`<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">What did Person A say?</div>`;
     h+=renderQuizOpts(id,parsed,'a');
     area.innerHTML=h;}
@@ -657,7 +672,7 @@ function rAllDet(){
   if(quizMode){
     em+=`<div class="dp-st" style="margin-top:12px">Quiz</div>`;
     em+=`<div id="quizArea_${e.id}">`;
-    const qc=quizCache[e.id];if(qc){em+=`<div style="margin-bottom:12px;padding:12px 16px;background:var(--accentLight2);border-radius:10px;border-left:3px solid var(--accent)"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Person B's Response</div><div style="font-size:14px;color:var(--text);line-height:1.5">${esc(qc.response)}</div></div>`;em+=`<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">What did Person A say?</div>`;em+=renderQuizOpts(e.id,qc,'a');}
+    const qc=quizCache[e.id];if(qc){em+=`<div style="margin-bottom:12px;padding:12px 16px;background:var(--accentLight2);border-radius:10px;border-left:3px solid var(--accent)"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Person B's Response</div><div style="font-size:14px;color:var(--text);line-height:1.5;display:flex;align-items:start;gap:6px"><span style="flex:1">${esc(qc.response)}</span><button class="spk" onclick="speak(\`${esc(qc.response).replace(/\x60/g,'')}\`)" style="flex-shrink:0">${spkSvg}</button></div></div>`;em+=`<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">What did Person A say?</div>`;em+=renderQuizOpts(e.id,qc,'a');}
     em+=`</div>`;
     em+=`<button class="btn btn-s btn-sm" onclick="genQuiz('${e.id}')" style="margin-top:6px" id="quizBtn_${e.id}">Generate Quiz ▶</button>`;
     em+=`<div class="em-actions"><span class="em-note">${isActivation?'Complete the quiz to activate':'Complete the quiz to finish review #'+(e.reviewCount+1)}</span></div>`;
