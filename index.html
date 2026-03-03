@@ -632,7 +632,7 @@ const spkSvg='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke
 // ALL
 function rAll(){
   const el=document.getElementById('tAll');
-  let h=`<div class="fb"><select id="ff" onchange="rAllList()"><option value="all">All</option><option value="active">Active</option><option value="noex">No Example</option><option value="due">Due Today</option><option value="mastered">Mastered</option></select><input id="fs" placeholder="Search..." oninput="rAllList()"><span id="aCount" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text4);white-space:nowrap"></span><button class="btn btn-p btn-sm" onclick="oMo()">+ Add New</button></div>`;
+  let h=`<div class="fb"><select id="ff" onchange="rAllList()"><option value="all">All</option><option value="active">Active</option><option value="noex">New</option><option value="r1">Review 1</option><option value="r2">Review 2</option><option value="r3">Review 3</option><option value="r4">Review 4</option><option value="r5">Review 5</option><option value="due">Due Today</option><option value="mastered">Mastered</option></select><input id="fs" placeholder="Search..." oninput="rAllList()"><span id="aCount" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text4);white-space:nowrap"></span><button class="btn btn-p btn-sm" onclick="oMo()">+ Add New</button></div>`;
   h+=`<div class="al-wrap"><div class="al-top" id="aR"></div><div class="al-bot"><div class="al-bot-l" id="aL"></div><div class="al-bot-r" id="aEM"></div></div></div>`;
   el.innerHTML=h;rAllList();rAllDet();
 }
@@ -642,6 +642,7 @@ function rAllList(){
   const s=(document.getElementById('fs')?.value||'').toLowerCase();
   let items=D.expressions.filter(e=>{
     if(f==='active'&&e.mastered)return false;if(f==='due'&&!isDue(e))return false;if(f==='mastered'&&!e.mastered)return false;if(f==='noex'&&!isNoEx(e))return false;
+    if(f.startsWith('r')&&f.length===2){const rn=parseInt(f[1]);if(e.mastered||isNoEx(e)||e.reviewCount!==(rn-1))return false;}
     if(s&&!e.expression.toLowerCase().includes(s)&&!e.meaning.toLowerCase().includes(s))return false;return true;
   }).sort((a,b)=>{if(a.mastered!==b.mastered)return a.mastered?1:-1;const aN=isNoEx(a),bN=isNoEx(b);if(aN!==bN)return aN?-1:1;const ad=isDue(a),bd=isDue(b);if(ad!==bd)return ad?-1:1;return(a.nextReviewDate||'9').localeCompare(b.nextReviewDate||'9');});
   // Update count display
