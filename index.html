@@ -636,9 +636,9 @@ function rAllList(){
     let badge='',statusTxt='';
     if(e.mastered){badge='<span class="badge mastered">Mastered</span>';}
     else if(noEx){badge='<span class="badge noex">No Example</span>';}
-    else if(od){badge='<span class="badge due">Overdue</span>';statusTxt='R'+(e.reviewCount+1);}
-    else if(due){badge='<span class="badge due">Due Today</span>';statusTxt='R'+(e.reviewCount+1);}
-    else{statusTxt='R'+(e.reviewCount);if(dl!==null&&dl>0)statusTxt+=' · '+dl+'d left';else if(e.nextReviewDate)statusTxt+=' · '+fmt(e.nextReviewDate);}
+    else if(od){badge='<span class="badge due">Overdue</span>';statusTxt='Review '+(e.reviewCount+1);}
+    else if(due){badge='<span class="badge due">Due Today</span>';statusTxt='Review '+(e.reviewCount+1);}
+    else{statusTxt='Review '+(e.reviewCount);if(dl!==null&&dl>0)statusTxt+=' · '+dl+'d left';else if(e.nextReviewDate)statusTxt+=' · '+fmt(e.nextReviewDate);}
     h+=`<div class="li-bot">${badge}<span class="li-next">${statusTxt}</span></div></div>`;
   });el.innerHTML=h;
 }
