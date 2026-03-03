@@ -268,7 +268,7 @@ const DISC_CATS=[
 ];
 const TABS=[{id:'today',label:'Tasks',r:rToday},{id:'all',label:'List',r:rAll},{id:'stats',label:'Stats',r:rStats},{id:'discover',label:'Discover',r:rDisc}];
 let D={expressions:[],discCache:{friends:{list:[],details:{}},suits:{list:[],details:{}}},excl:{friends:[],suits:[]}};
-let ct=(()=>{try{const t=localStorage.getItem('evtab');return t&&['all','today','stats','discover'].includes(t)?t:'today';}catch(e){return'today';}})(),selId=null,selDi=null,sugCache={},quizCache={},outputCache={};
+let ct=(()=>{try{const t=localStorage.getItem('evtab');return t&&['all','today','stats','discover'].includes(t)?t:'today';}catch(e){return'today';}})(),selId=null,selDi=null,sugCache={},quizCache={},ansQCache={},outputCache={};
 
 const td=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
 const fmt=d=>d?((p=d.split('-'))&&`${+p[1]}/${+p[2]}`):'—';
@@ -357,20 +357,24 @@ function rToday(){
   } else {
     if(dues.length){
     dues.forEach(e=>{
-      const od=isOD(e);const exs=allEx(e);
+      const od=isOD(e);const exs=allEx(e);const isWriting=e.reviewCount===2||e.reviewCount===4;
       h+=`<div class="card"><div class="c-expr">"${esc(e.expression)}" <button class="spk" onclick="speak('${esc(e.expression).replace(/'/g,"\\'")}')">${spkSvg}</button></div><div class="c-mean">${esc(e.meaning)}</div><div class="c-meta"><span class="badge ${od?'overdue':'due'}">${od?'Overdue':'Due Today'}</span><span>Review ${e.reviewCount+1} / 5</span></div>`;
       h+=rProg(e);
       if(exs.length){h+=`<div class="past-ex"><div class="pe-title">Past Examples</div>`;exs.forEach((r,i)=>{h+=`<div class="pe-item"><span class="en">${i+1}.</span>${esc(r.text)}<button class="spk" onclick="speak(\`${esc(r.text).replace(/`/g,'')}\`)">${spkSvg}</button><span class="ed">${fmt(r.date)}</span></div>`;});h+=`</div>`;}
-      h+=`<div style="margin:10px 0"><div class="dp-st">Situation Quiz</div><button class="btn btn-s btn-sm" onclick="genQuizT('${e.id}')" id="tquizBtn_${e.id}" style="margin-bottom:10px">Generate Quiz ▶</button><div id="tquiz_${e.id}">`;
-      const qc=quizCache[e.id];if(qc){h+=`<div style="margin-bottom:12px;padding:12px 16px;background:var(--accentLight2);border-radius:10px;border-left:3px solid var(--accent)"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Person B's Response</div><div style="font-size:14px;color:var(--text);line-height:1.5;display:flex;align-items:start;gap:6px"><span style="flex:1">${esc(qc.response)}</span><button class="spk" onclick="speak(\`${esc(qc.response).replace(/`/g,'')}\`)" style="flex-shrink:0">${spkSvg}</button></div></div>`;h+=`<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">What did Person A say?</div>`;h+=renderQuizOpts(e.id,qc,'t');}
-      h+=`</div></div></div>`;
+      if(isWriting){
+        h+=`<div style="margin:10px 0"><div class="dp-st">Output Writing</div><button class="btn btn-s btn-sm" onclick="genOutput('${e.id}','t')" id="toutBtn_${e.id}" style="margin-bottom:10px">Generate Prompt ▶</button><div id="toutput_${e.id}"></div></div></div>`;
+      } else {
+        h+=`<div style="margin:10px 0"><div class="dp-st">Situation Quiz</div><button class="btn btn-s btn-sm" onclick="genQuizT('${e.id}')" id="tquizBtn_${e.id}" style="margin-bottom:10px">Generate Quiz ▶</button><div id="tquiz_${e.id}">`;
+        const qc=quizCache[e.id];if(qc){h+=`<div style="margin-bottom:12px;padding:12px 16px;background:var(--accentLight2);border-radius:10px;border-left:3px solid var(--accent)"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Person B's Response</div><div style="font-size:14px;color:var(--text);line-height:1.5;display:flex;align-items:start;gap:6px"><span style="flex:1">${esc(qc.response)}</span><button class="spk" onclick="speak(\`${esc(qc.response).replace(/`/g,'')}\`)" style="flex-shrink:0">${spkSvg}</button></div></div>`;h+=`<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">What did Person A say?</div>`;h+=renderQuizOpts(e.id,qc,'t');}
+        h+=`</div></div></div>`;
+      }
     });
     }
     if(noExItems.length){
     h+=`<div style="margin:18px 0 10px;font-size:13px;font-weight:700;color:var(--orange);display:flex;align-items:center;gap:6px"><span style="font-size:16px">⚡</span> New Expressions (${noExItems.length})</div>`;
     noExItems.forEach(e=>{
       h+=`<div class="card" style="border-left:3px solid var(--orange)"><div class="c-expr">"${esc(e.expression)}" <button class="spk" onclick="speak('${esc(e.expression).replace(/'/g,"\\'")}')">${spkSvg}</button></div><div class="c-mean">${esc(e.meaning)}</div><div class="c-meta"><span class="badge noex">New</span><span>Added ${fmt(e.learnedDate)}</span></div>`;
-      h+=`<div style="margin:10px 0"><div class="dp-st">Output Exercise</div><button class="btn btn-s btn-sm" onclick="genOutput('${e.id}','t')" id="toutBtn_${e.id}" style="margin-bottom:10px">Generate Prompt ▶</button><div id="toutput_${e.id}"></div></div></div>`;
+      h+=`<div style="margin:10px 0"><div class="dp-st">Answer Quiz</div><button class="btn btn-s btn-sm" onclick="genAnsQuiz('${e.id}','t')" id="taqBtn_${e.id}" style="margin-bottom:10px">Generate Quiz ▶</button><div id="taq_${e.id}"></div></div></div>`;
     });
     }
   }
@@ -420,12 +424,12 @@ function showAllDonePopup(){
 }
 
 // Quiz functions
-function renderQuizOpts(id,quiz,prefix){
+function renderQuizOpts(id,quiz,prefix,handler='ansQuiz'){
   let opts=[{text:quiz.correct,correct:true},...quiz.wrong.map(w=>({text:w,correct:false}))];
   // Shuffle
   for(let i=opts.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[opts[i],opts[j]]=[opts[j],opts[i]];}
   const ci=opts.findIndex(o=>o.correct);
-  let h='';opts.forEach((o,idx)=>{h+=`<div class="quiz-opt-wrap"><div class="quiz-opt" style="margin-bottom:4px;display:flex;align-items:center;gap:8px" onclick="ansQuiz('${id}',${idx},${ci},'${prefix}')"><span style="flex:1">${esc(o.text)}</span><button class="spk" onclick="event.stopPropagation();speak(\`${esc(o.text).replace(/`/g,'')}\`)" style="flex-shrink:0">${spkSvg}</button></div></div>`;});
+  let h='';opts.forEach((o,idx)=>{h+=`<div class="quiz-opt-wrap"><div class="quiz-opt" style="margin-bottom:4px;display:flex;align-items:center;gap:8px" onclick="${handler}('${id}',${idx},${ci},'${prefix}')"><span style="flex:1">${esc(o.text)}</span><button class="spk" onclick="event.stopPropagation();speak(\`${esc(o.text).replace(/`/g,'')}\`)" style="flex-shrink:0">${spkSvg}</button></div></div>`;});
   return h;
 }
 async function genQuizT(id){
@@ -540,6 +544,81 @@ function checkAllDone(){
   },100);
 }
 
+// ANSWER QUIZ
+async function genAnsQuiz(id,prefix){
+  const e=D.expressions.find(x=>x.id===id);if(!e)return;
+  const btnId=(prefix==='t'?'taqBtn_':'aqBtn_')+id;
+  const areaId=(prefix==='t'?'taq_':'aaq_')+id;
+  const btn=document.getElementById(btnId);if(btn){btn.disabled=true;btn.textContent='Generating...';}
+  const area=document.getElementById(areaId);
+  if(area)area.innerHTML=`<div class="loading">Generating quiz...<div class="load-bar"><div class="load-bar-inner"></div></div></div>`;
+  const prompt=`For the expression "${e.expression}" (meaning: ${e.meaning}), create an answer quiz. Generate a short, natural situation or question from Person A that would naturally prompt a response using this expression. Then provide 4 response options from Person B — only 1 should correctly and naturally use "${e.expression}". The other 3 should be plausible but incorrect responses. IMPORTANT: Do NOT include labels like "Person A:" or "Person B:" in any of the texts. Just write the dialogue lines directly. Return JSON: {"situation":"What Person A says","correct":"Correct response using the expression","wrong":["wrong1","wrong2","wrong3"]} Seed: ${Date.now()}`;
+  try{
+    const data=await callGem(prompt);const parsed=JSON.parse(data);ansQCache[id]=parsed;
+    if(area){let h=`<div style="margin-bottom:12px;padding:12px 16px;background:var(--accentLight2);border-radius:10px;border-left:3px solid var(--accent)"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Person A says</div><div style="font-size:14px;color:var(--text);line-height:1.5;display:flex;align-items:start;gap:6px"><span style="flex:1">${esc(parsed.situation)}</span><button class="spk" onclick="speak(\`${esc(parsed.situation).replace(/`/g,'')}\`)" style="flex-shrink:0">${spkSvg}</button></div></div>`;
+    h+=`<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">Choose the best response using "${esc(e.expression)}"</div>`;
+    h+=renderQuizOpts(id,parsed,prefix,'ansAnsQuiz');
+    area.innerHTML=h;}
+    playGenSound();
+  }catch(err){if(area)area.innerHTML=`<div style="font-size:12px;color:var(--red);padding:8px">Error: ${err.message}</div>`;}
+  if(btn){btn.disabled=false;btn.textContent='Generate Quiz ▶';}
+}
+async function ansAnsQuiz(id,idx,correctIdx,prefix){
+  const areaId=(prefix==='t'?'taq_':'aaq_')+id;
+  const area=document.getElementById(areaId);
+  if(!area)return;
+  const opts=area.querySelectorAll('.quiz-opt');
+  const qc=ansQCache[id];if(!qc)return;
+  const e=D.expressions.find(x=>x.id===id);if(!e)return;
+  const chosen=opts[idx].querySelector('span')?.textContent?.trim()||'';
+  const isCorrect=idx===correctIdx;
+  const oldExp=opts[idx].parentElement.querySelector('.quiz-exp[data-idx="'+idx+'"]');
+  if(oldExp)oldExp.remove();
+  if(isCorrect){
+    opts.forEach((o,i)=>{if(i===idx)o.classList.add('correct');o.setAttribute('disabled','true');o.onclick=null;});
+    const loadEl=document.createElement('div');loadEl.className='quiz-exp';loadEl.dataset.idx=idx;loadEl.innerHTML='<div class="loading" style="padding:6px 0;font-size:12px">Generating explanation...<div class="load-bar"><div class="load-bar-inner"></div></div></div>';
+    opts[idx].after(loadEl);
+    try{
+      const prompt=`The expression is "${e.expression}" (meaning: ${e.meaning}). Person A said: "${qc.situation}". The user correctly chose the response: "${chosen}". Explain in 1-2 short sentences in Japanese why this is the correct answer and how it naturally uses "${e.expression}". Return JSON: {"explanation":"日本語の解説"}`;
+      const data=await callGem(prompt);const parsed=JSON.parse(data);
+      loadEl.innerHTML=`<div style="padding:8px 12px;margin-bottom:8px;border-radius:8px;background:var(--greenBg);border:1px solid var(--green);font-size:13px;line-height:1.5;color:var(--text2)"><strong style="color:var(--green)">Correct!</strong> ${esc(parsed.explanation)}</div>`;
+    }catch(err){loadEl.innerHTML=`<div style="padding:8px 12px;margin-bottom:8px;border-radius:8px;background:var(--greenBg);border:1px solid var(--green);font-size:13px;color:var(--green)"><strong>Correct!</strong></div>`;}
+    const oldCWrap=area.querySelector('.quiz-complete-wrap');if(oldCWrap)oldCWrap.remove();
+    const cWrap=document.createElement('div');cWrap.className='quiz-complete-wrap';cWrap.style.cssText='margin-top:10px;text-align:center';
+    const cBtn=document.createElement('button');cBtn.className='btn btn-p btn-sm';cBtn.textContent='Complete Task ✓';cBtn.onclick=()=>doRevAnsQuiz(id,prefix);
+    cWrap.appendChild(cBtn);
+    area.appendChild(cWrap);
+  } else {
+    opts[idx].classList.add('wrong');
+    opts[idx].setAttribute('disabled','true');
+    opts[idx].onclick=null;
+    const loadEl=document.createElement('div');loadEl.className='quiz-exp';loadEl.dataset.idx=idx;loadEl.innerHTML='<div class="loading" style="padding:6px 0;font-size:12px">Generating explanation...<div class="load-bar"><div class="load-bar-inner"></div></div></div>';
+    opts[idx].after(loadEl);
+    try{
+      const prompt=`The expression is "${e.expression}" (meaning: ${e.meaning}). Person A said: "${qc.situation}". The user chose: "${chosen}" but the correct answer was: "${qc.correct}". Explain in 1-2 short sentences in Japanese why "${chosen}" is not the best response here. Return JSON: {"explanation":"日本語の解説"}`;
+      const data=await callGem(prompt);const parsed=JSON.parse(data);
+      loadEl.innerHTML=`<div style="padding:8px 12px;margin-bottom:8px;border-radius:8px;background:var(--redBg);border:1px solid var(--red);font-size:13px;line-height:1.5;color:var(--text2)"><strong style="color:var(--red)">Incorrect.</strong> ${esc(parsed.explanation)}</div>`;
+    }catch(err){loadEl.innerHTML=`<div style="padding:8px 12px;margin-bottom:8px;border-radius:8px;background:var(--redBg);border:1px solid var(--red);font-size:13px;color:var(--red)"><strong>Incorrect.</strong></div>`;}
+  }
+}
+function doRevAnsQuiz(id,prefix){
+  const e=D.expressions.find(x=>x.id===id);if(!e)return;
+  const qc=ansQCache[id];
+  const quizEx=qc?`"${qc.situation}" — "${qc.correct}"`:'[Answer quiz: correct]';
+  const areaId=(prefix==='t'?'taq_':'aaq_')+id;
+  const area=document.getElementById(areaId);
+  const btn=area?area.querySelector('.quiz-opt.correct'):null;
+  if(!e.examples)e.examples=[];
+  e.examples.push({date:td(),text:quizEx});
+  e.activated=true;e.learnedDate=td();
+  e.nextReviewDate=cNext(td(),0);
+  save();delete ansQCache[id];
+  notifyParent('task:activation',{expressionId:id,date:td()});
+  playRevSound();fireConfetti(btn);
+  if(ct==='today'){const card=area?area.closest('.card'):null;if(card){card.classList.add('card-done');setTimeout(()=>{card.remove();rNav();checkAllDone();},650);}else{rNav();checkAllDone();}}
+  if(ct==='all'){rAllList();rAllDet();rNav();}
+}
+
 // OUTPUT EXERCISE
 async function genOutput(id,prefix){
   const e=D.expressions.find(x=>x.id===id);if(!e)return;
@@ -588,14 +667,27 @@ function doRevOutput(id,prefix){
   const inp=document.getElementById((prefix==='t'?'toutIn_':'outIn_')+id);
   const userResp=inp?inp.value.trim():'';
   const exText=oc?`"${oc.prompt}" → "${userResp}"`:'[Output exercise]';
-  if(!e.examples)e.examples=[];
-  e.examples.push({date:td(),text:exText});
-  e.activated=true;e.learnedDate=td();
-  e.nextReviewDate=cNext(td(),0);
-  save();delete outputCache[id];
-  notifyParent('task:activation',{expressionId:id,date:td()});
   const area=document.getElementById((prefix==='t'?'toutput_':'aoutput_')+id);
-  playRevSound();fireConfetti(area);
+  if(isNoEx(e)){
+    if(!e.examples)e.examples=[];
+    e.examples.push({date:td(),text:exText});
+    e.activated=true;e.learnedDate=td();
+    e.nextReviewDate=cNext(td(),0);
+    save();delete outputCache[id];
+    notifyParent('task:activation',{expressionId:id,date:td()});
+    playRevSound();fireConfetti(area);
+  } else {
+    if(!e.reviews)e.reviews=[];
+    e.reviews.push({date:td(),example:exText});
+    e.reviewCount++;
+    const justMastered=e.reviewCount>=5;
+    if(justMastered){e.mastered=true;e.nextReviewDate=null;}
+    else{e.nextReviewDate=cNext(td(),e.reviewCount);}
+    save();delete outputCache[id];
+    notifyParent(justMastered?'task:mastery':'task:review',{expressionId:id,date:td(),reviewCount:e.reviewCount});
+    if(justMastered){playMasterSound();fireConfetti(area);}
+    else{playRevSound();fireConfetti(area);}
+  }
   if(ct==='today'){const card=area?area.closest('.card'):null;if(card){card.classList.add('card-done');setTimeout(()=>{card.remove();rNav();checkAllDone();},650);}else{rNav();checkAllDone();}}
   if(ct==='all'){rAllList();rAllDet();rNav();}
 }
@@ -770,12 +862,17 @@ function rAllDet(){
   if(exs.length){em+=`<div class="dp-st">Saved Examples</div>`;exs.forEach((r,i)=>{em+=`<div class="em-saved"><span class="em-num">${i+1}.</span><span class="et">${esc(r.text)}</span><button class="spk" onclick="speak(\`${esc(r.text).replace(/`/g,'')}\`)">${spkSvg}</button><span class="emeta">${fmt(r.date)}</span></div>`;});}
 
   if(isActivation){
-    em+=`<div class="dp-st" style="margin-top:12px">Output Exercise</div>`;
+    em+=`<div class="dp-st" style="margin-top:12px">Answer Quiz</div>`;
+    em+=`<button class="btn btn-s btn-sm" onclick="genAnsQuiz('${e.id}','a')" style="margin-bottom:10px" id="aqBtn_${e.id}">Generate Quiz ▶</button>`;
+    em+=`<div id="aaq_${e.id}"></div>`;
+    em+=`<div class="em-actions"><span class="em-note">Complete the quiz to activate</span></div>`;
+  } else if(isReview&&(e.reviewCount===2||e.reviewCount===4)){
+    em+=`<div class="dp-st" style="margin-top:12px">Output Writing</div>`;
     em+=`<button class="btn btn-s btn-sm" onclick="genOutput('${e.id}','a')" style="margin-bottom:10px" id="outBtn_${e.id}">Generate Prompt ▶</button>`;
     em+=`<div id="aoutput_${e.id}"></div>`;
-    em+=`<div class="em-actions"><span class="em-note">Respond using the expression to activate</span></div>`;
+    em+=`<div class="em-actions"><span class="em-note">Complete to finish Review ${e.reviewCount+1}</span></div>`;
   } else if(isReview){
-    em+=`<div class="dp-st" style="margin-top:12px">Quiz</div>`;
+    em+=`<div class="dp-st" style="margin-top:12px">Situation Quiz</div>`;
     em+=`<button class="btn btn-s btn-sm" onclick="genQuiz('${e.id}')" style="margin-bottom:10px" id="quizBtn_${e.id}">Generate Quiz ▶</button>`;
     em+=`<div id="quizArea_${e.id}">`;
     const qc=quizCache[e.id];if(qc){em+=`<div style="margin-bottom:12px;padding:12px 16px;background:var(--accentLight2);border-radius:10px;border-left:3px solid var(--accent)"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Person B's Response</div><div style="font-size:14px;color:var(--text);line-height:1.5;display:flex;align-items:start;gap:6px"><span style="flex:1">${esc(qc.response)}</span><button class="spk" onclick="speak(\`${esc(qc.response).replace(/\x60/g,'')}\`)" style="flex-shrink:0">${spkSvg}</button></div></div>`;em+=`<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">What did Person A say?</div>`;em+=renderQuizOpts(e.id,qc,'a');}
