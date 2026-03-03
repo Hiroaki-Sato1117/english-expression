@@ -360,18 +360,18 @@ function rToday(){
       h+=`<div class="card"><div class="c-expr">"${esc(e.expression)}" <button class="spk" onclick="speak('${esc(e.expression).replace(/'/g,"\\'")}')">${spkSvg}</button></div><div class="c-mean">${esc(e.meaning)}</div><div class="c-meta"><span class="badge ${od?'overdue':'due'}">${od?'Overdue':'Due Today'}</span><span>Review ${e.reviewCount+1} / 5</span></div>`;
       h+=rProg(e);
       if(exs.length){h+=`<div class="past-ex"><div class="pe-title">Past Examples</div>`;exs.forEach((r,i)=>{h+=`<div class="pe-item"><span class="en">${i+1}.</span>${esc(r.text)}<button class="spk" onclick="speak(\`${esc(r.text).replace(/`/g,'')}\`)">${spkSvg}</button><span class="ed">${fmt(r.date)}</span></div>`;});h+=`</div>`;}
-      h+=`<div style="margin:10px 0"><div class="dp-st">Situation Quiz</div><div id="tquiz_${e.id}">`;
+      h+=`<div style="margin:10px 0"><div class="dp-st">Situation Quiz</div><button class="btn btn-s btn-sm" onclick="genQuizT('${e.id}')" id="tquizBtn_${e.id}" style="margin-bottom:10px">Generate Quiz ▶</button><div id="tquiz_${e.id}">`;
       const qc=quizCache[e.id];if(qc){h+=`<div style="margin-bottom:12px;padding:12px 16px;background:var(--accentLight2);border-radius:10px;border-left:3px solid var(--accent)"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Person B's Response</div><div style="font-size:14px;color:var(--text);line-height:1.5;display:flex;align-items:start;gap:6px"><span style="flex:1">${esc(qc.response)}</span><button class="spk" onclick="speak(\`${esc(qc.response).replace(/`/g,'')}\`)" style="flex-shrink:0">${spkSvg}</button></div></div>`;h+=`<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">What did Person A say?</div>`;h+=renderQuizOpts(e.id,qc,'t');}
-      h+=`</div><button class="btn btn-s btn-sm" onclick="genQuizT('${e.id}')" id="tquizBtn_${e.id}">Generate Quiz ▶</button></div></div>`;
+      h+=`</div></div></div>`;
     });
     }
     if(noExItems.length){
     h+=`<div style="margin:18px 0 10px;font-size:13px;font-weight:700;color:var(--orange);display:flex;align-items:center;gap:6px"><span style="font-size:16px">⚡</span> No Example Yet (${noExItems.length})</div>`;
     noExItems.forEach(e=>{
       h+=`<div class="card" style="border-left:3px solid var(--orange)"><div class="c-expr">"${esc(e.expression)}" <button class="spk" onclick="speak('${esc(e.expression).replace(/'/g,"\\'")}')">${spkSvg}</button></div><div class="c-mean">${esc(e.meaning)}</div><div class="c-meta"><span class="badge noex">New</span><span>Added ${fmt(e.learnedDate)}</span></div>`;
-      h+=`<div style="margin:10px 0"><div class="dp-st">Situation Quiz</div><div id="tquiz_${e.id}">`;
+      h+=`<div style="margin:10px 0"><div class="dp-st">Situation Quiz</div><button class="btn btn-s btn-sm" onclick="genQuizT('${e.id}')" id="tquizBtn_${e.id}" style="margin-bottom:10px">Generate Quiz ▶</button><div id="tquiz_${e.id}">`;
       const qc2=quizCache[e.id];if(qc2){h+=`<div style="margin-bottom:12px;padding:12px 16px;background:var(--accentLight2);border-radius:10px;border-left:3px solid var(--accent)"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Person B's Response</div><div style="font-size:14px;color:var(--text);line-height:1.5;display:flex;align-items:start;gap:6px"><span style="flex:1">${esc(qc2.response)}</span><button class="spk" onclick="speak(\`${esc(qc2.response).replace(/`/g,'')}\`)" style="flex-shrink:0">${spkSvg}</button></div></div>`;h+=`<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">What did Person A say?</div>`;h+=renderQuizOpts(e.id,qc2,'t');}
-      h+=`</div><button class="btn btn-s btn-sm" onclick="genQuizT('${e.id}')" id="tquizBtn_${e.id}">Generate Quiz ▶</button></div></div>`;
+      h+=`</div></div></div>`;
     });
     }
   }
@@ -484,7 +484,7 @@ async function ansQuiz(id,idx,correctIdx,prefix){
     }catch(err){loadEl.innerHTML=`<div style="padding:8px 12px;margin-bottom:8px;border-radius:8px;background:var(--greenBg);border:1px solid var(--green);font-size:13px;color:var(--green)"><strong>Correct!</strong></div>`;}
     // Show complete button
     const oldCBtn=area.querySelector('.quiz-complete-btn');if(oldCBtn)oldCBtn.remove();
-    const cBtn=document.createElement('button');cBtn.className='btn btn-p btn-sm quiz-complete-btn';cBtn.style.cssText='margin-top:10px;width:100%';cBtn.textContent='Complete Task ✓';cBtn.onclick=()=>doRevQuiz(id,prefix);
+    const cBtn=document.createElement('button');cBtn.className='btn btn-p btn-sm quiz-complete-btn';cBtn.style.cssText='margin-top:10px';cBtn.textContent='Complete Task ✓';cBtn.onclick=()=>doRevQuiz(id,prefix);
     area.appendChild(cBtn);
   } else {
     opts[idx].classList.add('wrong');
@@ -695,10 +695,10 @@ function rAllDet(){
 
   if(quizMode){
     em+=`<div class="dp-st" style="margin-top:12px">Quiz</div>`;
+    em+=`<button class="btn btn-s btn-sm" onclick="genQuiz('${e.id}')" style="margin-bottom:10px" id="quizBtn_${e.id}">Generate Quiz ▶</button>`;
     em+=`<div id="quizArea_${e.id}">`;
     const qc=quizCache[e.id];if(qc){em+=`<div style="margin-bottom:12px;padding:12px 16px;background:var(--accentLight2);border-radius:10px;border-left:3px solid var(--accent)"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Person B's Response</div><div style="font-size:14px;color:var(--text);line-height:1.5;display:flex;align-items:start;gap:6px"><span style="flex:1">${esc(qc.response)}</span><button class="spk" onclick="speak(\`${esc(qc.response).replace(/\x60/g,'')}\`)" style="flex-shrink:0">${spkSvg}</button></div></div>`;em+=`<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">What did Person A say?</div>`;em+=renderQuizOpts(e.id,qc,'a');}
     em+=`</div>`;
-    em+=`<button class="btn btn-s btn-sm" onclick="genQuiz('${e.id}')" style="margin-top:6px" id="quizBtn_${e.id}">Generate Quiz ▶</button>`;
     em+=`<div class="em-actions"><span class="em-note">${isActivation?'Complete the quiz to activate':'Complete the quiz to finish Review '+(e.reviewCount+1)}</span></div>`;
   } else {
     em+=`<div class="dp-st" style="margin-top:12px">AI Suggestions</div>`;
