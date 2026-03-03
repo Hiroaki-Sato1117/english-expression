@@ -239,7 +239,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 </head>
 <body>
 <nav class="nav"><div class="nav-brand">✦ Vocab Master</div><div class="nav-tabs" id="nv"></div><div class="nav-right"><button class="tbtn" onclick="toggleKbHelp()" title="Keyboard Shortcuts" style="font-size:14px">?</button><button class="tbtn" id="keyBtn" onclick="oKeyMo()" title="API Key Settings" style="font-size:11px;letter-spacing:1px">KEY</button><button class="tbtn" id="tb" onclick="tTh()">☽</button></div></nav>
-<div class="main"><div class="tc" id="tAll"></div><div class="tc" id="tToday"></div><div class="tc" id="tStats"></div><div class="tc" id="tDiscover"></div></div>
+<div class="main"><div class="tc" id="tToday"></div><div class="tc" id="tAll"></div><div class="tc" id="tStats"></div><div class="tc" id="tDiscover"></div></div>
 <div class="mo" id="addMo"><div class="modal"><h3>Add New Expression</h3><div class="mf"><label>English Expression</label><input id="mE" placeholder='"break the ice"'></div><div class="mf"><label>Meaning (Japanese)</label><input id="mM" placeholder="場を和ませる"></div><div class="ma"><button class="btn btn-s" onclick="cMo()">Cancel</button><button class="btn btn-p" onclick="addE()">Add</button></div></div></div>
 
 <div class="mo" id="keyMo"><div class="modal"><h3>Gemini API Key</h3><p style="font-size:12px;color:var(--text3);margin-bottom:14px;">Your API key is stored locally in your browser and never sent anywhere except Google's Gemini API.</p><div class="mf"><label>API Key</label><input id="keyIn" type="password" placeholder="AIzaSy..."></div><div id="keyStatus" style="font-size:11px;margin-bottom:10px;"></div><div class="ma"><button class="btn btn-d btn-sm" onclick="delKey()" id="delKeyBtn" style="margin-right:auto;display:none;">Delete Key</button><button class="btn btn-s" onclick="cKeyMo()">Cancel</button><button class="btn btn-p" onclick="saveKey()">Save</button></div></div></div>
@@ -265,9 +265,9 @@ const DISC_CATS=[
   {id:'drama',label:'ドラマ / 映画から学ぶ',layout:'scroll',keys:['friends','suits']},
   {id:'industry',label:'業界別イディオム',layout:'scroll',keys:['trading','finance','it','law','medical']}
 ];
-const TABS=[{id:'all',label:'All',r:rAll},{id:'today',label:'Today',r:rToday},{id:'stats',label:'Stats',r:rStats},{id:'discover',label:'Discover',r:rDisc}];
+const TABS=[{id:'today',label:'Tasks',r:rToday},{id:'all',label:'List',r:rAll},{id:'stats',label:'Stats',r:rStats},{id:'discover',label:'Discover',r:rDisc}];
 let D={expressions:[],discCache:{friends:{list:[],details:{}},suits:{list:[],details:{}}},excl:{friends:[],suits:[]}};
-let ct=(()=>{try{const t=localStorage.getItem('evtab');return t&&['all','today','stats','discover'].includes(t)?t:'all';}catch(e){return'all';}})(),selId=null,selDi=null,sugCache={},quizCache={};
+let ct=(()=>{try{const t=localStorage.getItem('evtab');return t&&['all','today','stats','discover'].includes(t)?t:'today';}catch(e){return'today';}})(),selId=null,selDi=null,sugCache={},quizCache={};
 
 const td=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
 const fmt=d=>d?((p=d.split('-'))&&`${+p[1]}/${+p[2]}`):'—';
@@ -352,7 +352,7 @@ function rToday(){
   h+=`<div style="font-size:10px;color:var(--text4);margin-top:2px">${tmrwDue===1?'review':'reviews'}</div>`;
   h+=`</div></div>`;
   if(!dues.length&&!noExItems.length){
-    h+=D.expressions.length?`<div class="empty"><div class="empty-icon" style="font-size:24px;opacity:.5">◆</div><div class="empty-text">All done for today!</div></div>`:`<div class="empty"><div class="empty-icon" style="font-size:24px;opacity:.5">◆</div><div class="empty-text">No expressions yet</div><button class="btn btn-p" onclick="ct='all';rNav();rT();">Go to All →</button></div>`;
+    h+=D.expressions.length?`<div class="empty"><div class="empty-icon" style="font-size:24px;opacity:.5">◆</div><div class="empty-text">All done for today!</div></div>`:`<div class="empty"><div class="empty-icon" style="font-size:24px;opacity:.5">◆</div><div class="empty-text">No expressions yet</div><button class="btn btn-p" onclick="ct='all';rNav();rT();">Go to List →</button></div>`;
   } else {
     if(dues.length){
     dues.forEach(e=>{
@@ -680,12 +680,9 @@ function rAllDet(){
     em+=`<div class="dp-st" style="margin-top:12px">AI Suggestions</div>`;
     em+=`<div id="sugArea_${e.id}">`;
     const cached=sugCache[e.id];
-    if(cached){cached.forEach(s=>{const en=typeof s==='string'?s:s.en;const ja=typeof s==='string'?'':s.ja;em+=`<div class="em-sug-item"><span class="copy-icon" onclick="copySug(this.parentElement,'${e.id}')" title="Click to copy">+</span><span onclick="copySug(this.parentElement,'${e.id}')" style="flex:1;cursor:pointer"><span>${esc(en)}</span>${ja?`<div style="font-size:10px;color:var(--text4);margin-top:2px">${esc(ja)}</div>`:''}</span><button class="spk" onclick="event.stopPropagation();speak(\`${esc(en).replace(/`/g,'')}\`)">${spkSvg}</button></div>`;});}
+    if(cached){cached.forEach(s=>{const en=typeof s==='string'?s:s.en;const ja=typeof s==='string'?'':s.ja;em+=`<div class="em-sug-item"><span style="flex:1"><span>${esc(en)}</span>${ja?`<div style="font-size:10px;color:var(--text4);margin-top:2px">${esc(ja)}</div>`:''}</span><button class="spk" onclick="event.stopPropagation();speak(\`${esc(en).replace(/`/g,'')}\`)">${spkSvg}</button></div>`;});}
     em+=`</div>`;
     em+=`<button class="btn btn-s btn-sm" onclick="genSug('${e.id}')" style="margin-top:6px" id="sugBtn_${e.id}">Generate Examples</button>`;
-
-    em+=`<div class="em-input-area" style="margin-top:12px"><div class="dp-st">Write / Paste Example</div><textarea id="emIn_${e.id}" placeholder='Write or paste an example using "${e.expression}"...' rows="2"></textarea></div>`;
-    em+=`<div class="em-actions"><span class="em-note">Add to your examples</span><button class="btn btn-p btn-sm" onclick="saveEx('${e.id}')">Save Example</button></div>`;
   }
   em+=`</div>`;
   emEl.innerHTML=em;
@@ -727,7 +724,7 @@ async function genSug(id){
     const data=await callGem(prompt);
     const parsed=JSON.parse(data);
     sugCache[id]=parsed;
-    if(area){let h='';parsed.forEach(s=>{const en=typeof s==='string'?s:s.en;const ja=typeof s==='string'?'':s.ja;h+=`<div class="em-sug-item"><span class="copy-icon" onclick="copySug(this.parentElement,'${id}')" title="Click to copy">+</span><span onclick="copySug(this.parentElement,'${id}')" style="flex:1;cursor:pointer"><span>${esc(en)}</span>${ja?`<div style="font-size:10px;color:var(--text4);margin-top:2px">${esc(ja)}</div>`:''}</span><button class="spk" onclick="event.stopPropagation();speak(\`${esc(en).replace(/`/g,'')}\`)">${spkSvg}</button></div>`;});area.innerHTML=h;}
+    if(area){let h='';parsed.forEach(s=>{const en=typeof s==='string'?s:s.en;const ja=typeof s==='string'?'':s.ja;h+=`<div class="em-sug-item"><span style="flex:1"><span>${esc(en)}</span>${ja?`<div style="font-size:10px;color:var(--text4);margin-top:2px">${esc(ja)}</div>`:''}</span><button class="spk" onclick="event.stopPropagation();speak(\`${esc(en).replace(/`/g,'')}\`)">${spkSvg}</button></div>`;});area.innerHTML=h;}
     playGenSound();
   }catch(err){if(area)area.innerHTML=`<div style="font-size:12px;color:var(--red);padding:8px">Error: ${err.message}</div>`;}
   if(btn){btn.disabled=false;btn.textContent='Generate Examples ▶';}
