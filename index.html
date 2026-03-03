@@ -483,9 +483,11 @@ async function ansQuiz(id,idx,correctIdx,prefix){
       loadEl.innerHTML=`<div style="padding:8px 12px;margin-bottom:8px;border-radius:8px;background:var(--greenBg);border:1px solid var(--green);font-size:13px;line-height:1.5;color:var(--text2)"><strong style="color:var(--green)">Correct!</strong> ${esc(parsed.explanation)}</div>`;
     }catch(err){loadEl.innerHTML=`<div style="padding:8px 12px;margin-bottom:8px;border-radius:8px;background:var(--greenBg);border:1px solid var(--green);font-size:13px;color:var(--green)"><strong>Correct!</strong></div>`;}
     // Show complete button
-    const oldCBtn=area.querySelector('.quiz-complete-btn');if(oldCBtn)oldCBtn.remove();
-    const cBtn=document.createElement('button');cBtn.className='btn btn-p btn-sm quiz-complete-btn';cBtn.style.cssText='margin-top:10px';cBtn.textContent='Complete Task ✓';cBtn.onclick=()=>doRevQuiz(id,prefix);
-    area.appendChild(cBtn);
+    const oldCWrap=area.querySelector('.quiz-complete-wrap');if(oldCWrap)oldCWrap.remove();
+    const cWrap=document.createElement('div');cWrap.className='quiz-complete-wrap';cWrap.style.cssText='margin-top:10px;text-align:center';
+    const cBtn=document.createElement('button');cBtn.className='btn btn-p btn-sm';cBtn.textContent='Complete Task ✓';cBtn.onclick=()=>doRevQuiz(id,prefix);
+    cWrap.appendChild(cBtn);
+    area.appendChild(cWrap);
   } else {
     opts[idx].classList.add('wrong');
     opts[idx].setAttribute('disabled','true');
