@@ -347,7 +347,11 @@ function rToday(){
   h+=`<td style="padding:4px 6px;font-weight:800;color:var(--accent);font-size:13px">Total</td></tr>`;
   h+=`<tr>`;slots.forEach(s=>{h+=`<td style="padding:4px 6px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;color:${s.count?'var(--text)':'var(--text4)'};opacity:${s.count?1:.4}">${s.count}</td>`;});
   h+=`<td style="padding:4px 6px;font-family:'JetBrains Mono',monospace;font-weight:900;font-size:20px;color:var(--accent)">${totalTasks}</td></tr>`;
-  h+=`</table></div></div>`;
+  h+=`</table></div>`;
+  h+=`<div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 8px;border-left:1px solid var(--border);margin-left:4px;padding-left:16px">`;
+  h+=`<div style="font-size:10px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Tomorrow</div>`;
+  h+=`<div style="font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:800;color:var(--text3)">${tmrwDue}</div>`;
+  h+=`</div></div>`;
   if(!dues.length&&!noExItems.length){
     h+=D.expressions.length?`<div class="empty"><div class="empty-icon" style="font-size:24px;opacity:.5">◆</div><div class="empty-text">All done for today!</div></div>`:`<div class="empty"><div class="empty-icon" style="font-size:24px;opacity:.5">◆</div><div class="empty-text">No expressions yet</div><button class="btn btn-p" onclick="ct='all';rNav();rT();">Go to List →</button></div>`;
   } else {
