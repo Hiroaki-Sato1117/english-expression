@@ -670,6 +670,7 @@ async function submitOutput(id,prefix){
   const prompt=`Expression: "${e.expression}" (meaning: ${e.meaning})\nPerson A said: "${oc.prompt}"\nUser (Person B) responded: "${userResp}"\n\nProvide detailed feedback in the following format:\n1. score: Score from 0-10 based on correct usage of the expression, naturalness, and appropriateness (integer)\n2. modelAnswer: A natural, ideal response using "${e.expression}" (in English)\n3. feedback: Detailed feedback on the user's response - was the expression used correctly? Is the phrasing natural? Suggestions for improvement. (in Japanese)\n4. promptTranslation: Natural Japanese translation of what Person A said ("${oc.prompt}")\n\nIMPORTANT: Ignore any repeated words or phrases in the user's response. This is often caused by voice input retries, not intentional repetition. Do NOT mention or penalize repetition in your feedback or score.\n\nReturn JSON: {"score":8,"modelAnswer":"English model answer","feedback":"日本語フィードバック","promptTranslation":"Person Aの発言の日本語訳"}`;
   try{
     const data=await callGem(prompt);const parsed=JSON.parse(data);
+    if(parsed.modelAnswer)outputCache[id].modelAnswer=parsed.modelAnswer;
     const sc=parsed.score!=null?parseInt(parsed.score):0;const scColor=sc>=8?'var(--green)':sc>=5?'var(--orange)':'var(--red)';
     let h=`<div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">`;
     if(parsed.promptTranslation){h+=`<div style="padding:10px 14px;border-radius:8px;background:var(--surface);border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--text4);text-transform:uppercase;margin-bottom:4px">Person A (Translation)</div><div style="font-size:13px;color:var(--text2);line-height:1.5">${esc(parsed.promptTranslation)}</div></div>`;}
@@ -684,9 +685,8 @@ async function submitOutput(id,prefix){
 function doRevOutput(id,prefix){
   const e=D.expressions.find(x=>x.id===id);if(!e)return;
   const oc=outputCache[id];
-  const inp=document.getElementById((prefix==='t'?'toutIn_':'outIn_')+id);
-  const userResp=inp?inp.value.trim():'';
-  const exText=oc?`"${oc.prompt}" → "${userResp}"`:'[Output exercise]';
+  const modelAns=oc&&oc.modelAnswer?oc.modelAnswer:'';
+  const exText=oc?`"${oc.prompt}" → "${modelAns}"`:'[Output exercise]';
   const area=document.getElementById((prefix==='t'?'toutput_':'aoutput_')+id);
   if(isNoEx(e)){
     if(!e.examples)e.examples=[];
