@@ -380,12 +380,18 @@ function rToday(){
     });
     }
   }
-  // Today's completed tasks
+  h+=`<div id="completedToday"></div>`;
+  el.innerHTML=h;
+  rCompletedToday();
+}
+function rCompletedToday(){
+  const el=document.getElementById('completedToday');if(!el)return;
   const doneToday=D.expressions.filter(e=>{
     const revDone=(e.reviews||[]).some(r=>r.date===td());
     const actDone=(e.examples||[]).some(x=>x.date===td())&&e.activated;
     return(revDone||actDone)&&!isDue(e)&&!isNoEx(e);
   });
+  let h='';
   if(doneToday.length){
     h+=`<div style="margin:24px 0 10px;font-size:13px;font-weight:700;color:var(--green);display:flex;align-items:center;gap:6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Completed Today (${doneToday.length})</div>`;
     doneToday.forEach(e=>{
@@ -519,7 +525,7 @@ function doRevQuiz(id,prefix){
     save();delete quizCache[id];
     notifyParent('task:activation',{expressionId:id,date:td()});
     playRevSound();fireConfetti(btn);
-    if(ct==='today'){const card=area?area.closest('.card'):null;if(card){card.classList.add('card-done');setTimeout(()=>{card.remove();rNav();checkAllDone();},650);}else{rNav();checkAllDone();}}
+    if(ct==='today'){const card=area?area.closest('.card'):null;if(card){card.classList.add('card-done');setTimeout(()=>{card.remove();rCompletedToday();rNav();checkAllDone();},650);}else{rCompletedToday();rNav();checkAllDone();}}
     if(ct==='all'){rAllList();rAllDet();rNav();}
     return;
   }
@@ -532,7 +538,7 @@ function doRevQuiz(id,prefix){
   notifyParent(justMastered?'task:mastery':'task:review',{expressionId:id,date:td(),reviewCount:e.reviewCount});
   if(justMastered){playMasterSound();fireConfetti(btn);}
   else{playRevSound();fireConfetti(btn);}
-  if(ct==='today'){const card=area?area.closest('.card'):null;if(card){card.classList.add('card-done');setTimeout(()=>{card.remove();rNav();checkAllDone();},650);}else{rNav();checkAllDone();}}
+  if(ct==='today'){const card=area?area.closest('.card'):null;if(card){card.classList.add('card-done');setTimeout(()=>{card.remove();rCompletedToday();rNav();checkAllDone();},650);}else{rCompletedToday();rNav();checkAllDone();}}
   if(ct==='all'){rAllList();rAllDet();rNav();}
 }
 function checkAllDone(){
@@ -628,7 +634,7 @@ function doRevAnsQuiz(id,prefix){
     if(justMastered){playMasterSound();fireConfetti(btn);}
     else{playRevSound();fireConfetti(btn);}
   }
-  if(ct==='today'){const card=area?area.closest('.card'):null;if(card){card.classList.add('card-done');setTimeout(()=>{card.remove();rNav();checkAllDone();},650);}else{rNav();checkAllDone();}}
+  if(ct==='today'){const card=area?area.closest('.card'):null;if(card){card.classList.add('card-done');setTimeout(()=>{card.remove();rCompletedToday();rNav();checkAllDone();},650);}else{rCompletedToday();rNav();checkAllDone();}}
   if(ct==='all'){rAllList();rAllDet();rNav();}
 }
 
@@ -701,7 +707,7 @@ function doRevOutput(id,prefix){
     if(justMastered){playMasterSound();fireConfetti(area);}
     else{playRevSound();fireConfetti(area);}
   }
-  if(ct==='today'){const card=area?area.closest('.card'):null;if(card){card.classList.add('card-done');setTimeout(()=>{card.remove();rNav();checkAllDone();},650);}else{rNav();checkAllDone();}}
+  if(ct==='today'){const card=area?area.closest('.card'):null;if(card){card.classList.add('card-done');setTimeout(()=>{card.remove();rCompletedToday();rNav();checkAllDone();},650);}else{rCompletedToday();rNav();checkAllDone();}}
   if(ct==='all'){rAllList();rAllDet();rNav();}
 }
 const micSvg='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="1" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="17" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>';
